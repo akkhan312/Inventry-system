@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, QrCode, Plus, Tag, Package, MapPin, Settings, Calendar, FileText, Loader2 } from 'lucide-react';
 import MobileHeader from '../components/MobileHeader';
 import { useIsMobile } from '../hooks/useMediaQuery';
 import api from '../services/api';
+import BarcodeScanner from '../components/BarcodeScanner';
 
 interface BarcodeMapping {
     id: string;
@@ -116,13 +118,15 @@ const BarcodeMappingMobile = () => {
 
     const handleScan = () => {
         setShowScanModal(true);
-        // Simulate scanning after 3 seconds
-        setTimeout(() => {
-            const randomBarcode = `BC-2023-${String(Math.floor(Math.random() * 900) + 100)}`;
-            setFormData(prev => ({ ...prev, barcode: randomBarcode }));
-            setShowScanModal(false);
-            alert(`Barcode scanned successfully: ${randomBarcode}`);
-        }, 3000);
+    };
+
+    const handleScanSuccess = (decodedText: string) => {
+        setFormData(prev => ({ ...prev, barcode: decodedText }));
+        setShowScanModal(false);
+        // creative feedback - optional
+        // const audio = new Audio('/beep.mp3'); 
+        // audio.play().catch(() => {}); 
+        // alert(`Barcode scanned: ${decodedText}`); // Optional alert
     };
 
     const filteredBarcodes = barcodes.filter(barcode =>
@@ -320,25 +324,10 @@ const BarcodeMappingMobile = () => {
 
             {/* Scan Modal */}
             {showScanModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowScanModal(false)}>
-                    <div className="bg-white rounded-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-medium">Scan Barcode</h2>
-                            <button onClick={() => setShowScanModal(false)} className="text-gray-500 hover:text-gray-700">✕</button>
-                        </div>
-
-                        <div className="flex flex-col items-center justify-center py-12 text-center">
-                            <QrCode size={48} className="text-gray-300 mb-4" />
-                            <p className="text-gray-600 mb-2">Position barcode within frame</p>
-                            <p className="text-sm text-gray-500">The camera will automatically detect and scan the barcode</p>
-                        </div>
-
-                        <div className="flex gap-3">
-                            <button onClick={() => setShowScanModal(false)} className="flex-1 bg-gray-100 text-gray-700 py-3 px-6 rounded-lg font-medium hover:bg-gray-200">Cancel</button>
-                            <button onClick={() => { setShowScanModal(false); document.getElementById('barcode')?.focus(); }} className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700">Manual Input</button>
-                        </div>
-                    </div>
-                </div>
+                <BarcodeScanner
+                    onScanSuccess={handleScanSuccess}
+                    onClose={() => setShowScanModal(false)}
+                />
             )}
         </div>
     );
