@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, RefreshCw, Download, Upload } from "lucide-react";
+import { Search, RefreshCw, Download, Upload, Trash2 } from "lucide-react";
 import api from "../services/api";
 
 interface Product {
@@ -49,6 +49,18 @@ const MasterData = () => {
             console.error("Error fetching products:", error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (window.confirm("Are you sure you want to delete this product? This action cannot be undone.")) {
+            try {
+                await api.delete(`/inventory/${id}`);
+                setProducts(products.filter(product => product.id !== id));
+            } catch (error) {
+                console.error("Error deleting product:", error);
+                alert("Failed to delete product. Please try again.");
+            }
         }
     };
 
@@ -220,6 +232,9 @@ const MasterData = () => {
                                     <th className="text-left py-3 px-4 bg-[#f8f9fa] font-semibold border-b-2 border-[#E1E8ED] whitespace-nowrap">
                                         Last Updated
                                     </th>
+                                    <th className="text-center py-3 px-4 bg-[#f8f9fa] font-semibold border-b-2 border-[#E1E8ED] whitespace-nowrap">
+                                        Action
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -270,6 +285,15 @@ const MasterData = () => {
                                                         year: "numeric",
                                                     }).replace(/\//g, "-")
                                                     : "—"}
+                                            </td>
+                                            <td className="py-3 px-4 text-center">
+                                                <button
+                                                    onClick={() => handleDelete(item.id)}
+                                                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Delete Product"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
                                             </td>
                                         </tr>
                                     ))
