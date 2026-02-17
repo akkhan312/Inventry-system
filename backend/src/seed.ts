@@ -5,9 +5,9 @@ import bcrypt from 'bcryptjs';
 
 const seedData = async () => {
     try {
-        console.log('🌱 Seeding database via Prisma...');
+        console.log('Seeding database via Prisma...');
         await prisma.$connect();
-        console.log('✅ Connected to database.');
+        console.log('Connected to database.');
 
         // 1. Seed Users (Admin & Mobile User)
         const hashedPassword = await bcrypt.hash('123456', 10);
@@ -50,7 +50,7 @@ const seedData = async () => {
                 create: u
             });
         }
-        console.log('✅ Users seeded');
+        console.log('Users seeded');
 
         // 2. Seed Locations
         const locationsData = [
@@ -68,7 +68,7 @@ const seedData = async () => {
                 await prisma.location.create({ data: loc });
             }
         }
-        console.log('✅ Locations seeded');
+        console.log('Locations seeded');
 
         // 3. Seed Suppliers
         const suppliersData = [
@@ -83,7 +83,7 @@ const seedData = async () => {
                 await prisma.supplier.create({ data: sup });
             }
         }
-        console.log('✅ Suppliers seeded');
+        console.log('Suppliers seeded');
 
         // 4. Seed Customers
         const customersData = [
@@ -98,7 +98,7 @@ const seedData = async () => {
                 await prisma.customer.create({ data: cust });
             }
         }
-        console.log('✅ Customers seeded');
+        console.log('Customers seeded');
 
         // 5. Seed Products
         const productsData = [
@@ -143,12 +143,12 @@ const seedData = async () => {
                 create: prod
             });
         }
-        console.log('✅ Products seeded');
+        console.log('Products seeded');
 
-        console.log('🚀 Database seeded successfully!');
+        console.log('Database seeded successfully!');
         process.exit();
     } catch (err: any) {
-        console.error('❌ Error seeding database:', err.message || err);
+        console.error('Error seeding database:', err.message || err);
         process.exit(1);
     }
 };

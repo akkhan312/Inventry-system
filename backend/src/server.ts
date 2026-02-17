@@ -23,7 +23,12 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(compression());
-app.use(cors());
+app.use(cors({
+    origin: true, // Reflects the request origin, or use '*' if preferred
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(json());
 app.use('/uploads', express.static('uploads'));
 
