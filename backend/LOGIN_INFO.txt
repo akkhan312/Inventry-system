@@ -1,0 +1,20 @@
+
+# Login Fixed & Verified
+
+The backend issues have been resolved. The server is running and the database has been seeded.
+
+## Credentials
+You can now log in with:
+
+**Admin User:**
+- **Email:** `alikhanse248@gmail.com`
+- **Password:** `alikhan123`
+
+**Alternate User:**
+- **Email:** `fiverr.alikhan@gmail.com`
+- **Password:** `123456`
+
+## Fix Summary
+- The server was crashing due to a missing `.env` file (containing `DATABASE_URL`).
+- The database was empty, causing "Invalid credentials" errors.
+- We restarted the server and ran `npm run seed` to populate the users.
