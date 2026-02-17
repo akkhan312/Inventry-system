@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma.js';
+import bcrypt from 'bcryptjs';
 import { dashboardCache } from '../lib/cache.js';
 
 const invalidateUserCache = () => {
@@ -80,12 +81,15 @@ export const createUser = async (req: Request, res: Response) => {
         // Store avatar path in DB when file is uploaded
         const avatarPath = req.file ? `/uploads/profiles/${req.file.filename}` : undefined;
 
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
         const user = await prisma.user.create({
             data: {
                 username: cleanUsername,
                 name,
                 email: cleanEmail,
-                password,
+                password: hashedPassword,
                 role: role.toLowerCase(),
                 status: 'active',
                 ...(avatarPath && { avatar: avatarPath })
@@ -124,7 +128,10 @@ export const updateProfile = async (req: Request, res: Response) => {
         const updateData: any = {};
         if (name) updateData.name = name.trim();
         if (email) updateData.email = email.toLowerCase().trim();
-        if (password) updateData.password = password;
+        if (password) {
+            const salt = await bcrypt.genSalt(10);
+            updateData.password = await bcrypt.hash(password, salt);
+        }
         if (avatar) updateData.avatar = avatar;
 
         const user = await (prisma.user as any).update({
@@ -164,7 +171,10 @@ export const updateUser = async (req: Request, res: Response) => {
         if (email !== undefined) updateData.email = email.toLowerCase().trim();
         if (username !== undefined) updateData.username = username.trim().toLowerCase();
         if (role !== undefined) updateData.role = role.toLowerCase().trim();
-        if (password !== undefined && password !== '') updateData.password = password;
+        if (password !== undefined && password !== '') {
+            const salt = await bcrypt.genSalt(10);
+            updateData.password = await bcrypt.hash(password, salt);
+        }
 
         const user = await prisma.user.update({
             where: { id: id as string },
