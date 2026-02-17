@@ -24,30 +24,31 @@ const PORT = process.env.PORT || 5000;
 // Enable trust proxy to correctly handle headers from Nginx/Load Balancer
 app.set('trust proxy', 1);
 
-// Manual CORS Middleware - Extremely Robust Attempt
-app.use((req: Request, res: Response, next: NextFunction) => {
-    const origin = req.get('origin');
+// CORS Configuration
+const allowedOrigins = [
+    'https://inventory.gstsa1.org',
+    'https://inventoryapi.gstsa1.org',
+    'http://localhost:5000',
+    'http://localhost:5173',
+    'http://localhost:3000'
+];
 
-    // Always reflect the origin if it exists to satisfy credential requirements
-    if (origin) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-    }
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
 
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Max-Age', '86400'); // Cache preflight for 24h
-
-    // Debug header to verify this middleware is hit
-    res.setHeader('X-Backend-CORS', 'Handled');
-
-    // Handle preflight request immediately
-    if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
-    }
-    next();
-});
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.log(`[CORS] Rejected origin: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+}));
 
 app.use(compression());
 app.use(json());
