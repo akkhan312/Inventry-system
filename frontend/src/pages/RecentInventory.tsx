@@ -203,30 +203,21 @@ const RecentInventory: React.FC = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {selectedDetail.items.map((item, idx) => {
-                                        const variance = item.quantity - item.expectedQuantity;
-                                        const varianceClass =
-                                            variance > 0
-                                                ? "text-[#2ECC71] font-semibold"
-                                                : variance < 0
-                                                    ? "text-[#E74C3C] font-semibold"
-                                                    : "text-[#6C757D]";
-                                        const varianceText =
-                                            variance > 0 ? `+${variance}` : variance < 0 ? `${variance}` : "0";
-                                        return (
-                                            <tr
-                                                key={idx}
-                                                className="border-b border-[#E1E8ED] hover:bg-[#f1f3f5] transition-colors"
-                                            >
-                                                <td className="py-3 px-4 text-center text-[#6C757D]">{idx + 1}</td>
-                                                <td className="py-3 px-4 font-mono text-sm">{item.sku}</td>
-                                                <td className="py-3 px-4 font-medium">{item.name}</td>
-                                                <td className="py-3 px-4 text-right">{item.expectedQuantity}</td>
-                                                <td className="py-3 px-4 text-right font-semibold">{item.quantity}</td>
-                                                <td className={`py-3 px-4 text-right ${varianceClass}`}>{varianceText}</td>
-                                            </tr>
-                                        );
-                                    })}
+                                    {selectedDetail.items.map((item, idx) => (
+                                        <tr
+                                            key={idx}
+                                            className="border-b border-[#E1E8ED] hover:bg-[#f1f3f5] transition-colors"
+                                        >
+                                            <td className="py-3 px-4 text-center text-[#6C757D]">{idx + 1}</td>
+                                            <td className="py-3 px-4 font-mono text-sm">{item.sku}</td>
+                                            <td className="py-3 px-4 font-medium">{item.name}</td>
+                                            <td className="py-3 px-4 text-right">{item.expectedQuantity}</td>
+                                            <td className="py-3 px-4 text-right font-semibold">{item.quantity}</td>
+                                            <td className={`py-3 px-4 text-right ${(item.quantity - item.expectedQuantity) > 0 ? "text-[#2ECC71] font-semibold" : (item.quantity - item.expectedQuantity) < 0 ? "text-[#E74C3C] font-semibold" : "text-[#6C757D]"}`}>
+                                                {(item.quantity - item.expectedQuantity) > 0 ? `+${item.quantity - item.expectedQuantity}` : `${item.quantity - item.expectedQuantity}`}
+                                            </td>
+                                        </tr>
+                                    ))}
                                 </tbody>
                             </table>
                         ) : (
