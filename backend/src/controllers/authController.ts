@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import prisma from '../lib/prisma.js';
 import { sendLoginNotification, sendPasswordResetEmail } from '../services/emailService.js';
@@ -28,7 +29,7 @@ export const login = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Invalid credentials' });
         }
 
-        const isMatch = password === user.password;
+        const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ error: 'Invalid credentials' });
         }

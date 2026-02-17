@@ -15,6 +15,15 @@ const seedData = async () => {
 
         const users = [
             {
+                email: 'fiverr.alikhan@gmail.com',
+                username: 'fiverralikhan',
+                name: 'Ali Khan',
+                password: hashedPassword,
+                role: 'administrator',
+                status: 'active',
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AliFiverr'
+            },
+            {
                 email: 'alikhanse248@gmail.com',
                 username: 'engrali123',
                 name: 'Ali Khan',
@@ -28,7 +37,7 @@ const seedData = async () => {
                 username: 'mobileuser',
                 name: 'Mobile Operator',
                 password: hashedPassword,
-                role: 'user', // typically mobile users might have 'user' role
+                role: 'user',
                 status: 'active',
                 avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Mobile'
             },
