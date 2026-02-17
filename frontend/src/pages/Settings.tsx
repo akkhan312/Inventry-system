@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../services/api';
-import { User, Plus, X, Edit2, Trash2, Search, Filter } from 'lucide-react';
+import { Plus, X, Edit2, Trash2 } from 'lucide-react';
 
 /* ============================================================================
    TYPES & INTERFACES
@@ -67,7 +67,6 @@ const SettingsPage: React.FC = () => {
         confirmPassword: '',
     });
     const [createAdminAvatar, setCreateAdminAvatar] = useState<File | null>(null);
-    const [createAdminAvatarPreview, setCreateAdminAvatarPreview] = useState<string | null>(null);
 
     // Edit Form State
     const [editFormData, setEditFormData] = useState({
@@ -122,24 +121,12 @@ const SettingsPage: React.FC = () => {
     const openModal = () => {
         setFormData({ name: '', username: '', email: '', role: 'mobile_user', password: '', confirmPassword: '' });
         setCreateAdminAvatar(null);
-        setCreateAdminAvatarPreview(null);
         setErrors({});
         setModalOpen(true);
     };
 
     const closeModal = () => {
         setModalOpen(false);
-    };
-
-    const handleCreateAdminAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setCreateAdminAvatar(file);
-            setCreateAdminAvatarPreview(URL.createObjectURL(file));
-        } else {
-            setCreateAdminAvatar(null);
-            setCreateAdminAvatarPreview(null);
-        }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

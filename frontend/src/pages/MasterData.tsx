@@ -69,7 +69,7 @@ const MasterData = () => {
         try {
             const response = await api.post("/inventory/import", formDataUpload, {
                 transformRequest: [
-                    (data, headers) => {
+                    (data: any, headers: any) => {
                         if (data instanceof FormData) {
                             delete (headers as Record<string, string>)["Content-Type"];
                         }

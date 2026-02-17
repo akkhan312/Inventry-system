@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Eye, EyeOff, Package, User, Mail, IdCard } from 'lucide-react';
+import { Eye, EyeOff, Package } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { useDashboard } from '../context/DashboardContext';
