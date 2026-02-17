@@ -1,4 +1,4 @@
-import { Smartphone, Package, MapPin, WifiOff, List, Scan } from 'lucide-react';
+import { Package, MapPin, WifiOff, List, Scan } from 'lucide-react';
 import MobileHeader from '../components/MobileHeader';
 import { useIsMobile } from '../hooks/useMediaQuery';
 import { useNavigate } from 'react-router-dom';
@@ -10,8 +10,7 @@ interface MobileFeature {
     icon: React.ElementType;
     route: string;
     color: string;
-    bgColor: string;
-    borderColor: string;
+    gradient: string;
     available: boolean;
 }
 
@@ -23,56 +22,51 @@ const MobileUI = () => {
         {
             id: '1',
             title: 'Inventory List',
-            description: 'View and sync all submitted inventories with online/offline status',
+            description: 'View and sync detailed inventory records',
             icon: List,
             route: '/inventory-list',
-            color: 'text-blue-600',
-            bgColor: 'bg-blue-50',
-            borderColor: 'border-blue-200',
+            color: 'text-blue-100',
+            gradient: 'from-blue-500 to-blue-700',
             available: true
         },
         {
             id: '2',
-            title: 'Locations Manager',
-            description: 'Manage warehouse locations, stores, and distribution centers',
+            title: 'Locations',
+            description: 'Manage warehouse locations & stores',
             icon: MapPin,
             route: '/locations',
-            color: 'text-green-600',
-            bgColor: 'bg-green-50',
-            borderColor: 'border-green-200',
+            color: 'text-emerald-100',
+            gradient: 'from-emerald-500 to-emerald-700',
             available: true
         },
         {
             id: '3',
-            title: 'Offline Inventory',
-            description: 'Count physical inventory offline with localStorage persistence',
+            title: 'Offline Mode',
+            description: 'Count stock without internet connection',
             icon: WifiOff,
             route: '/offline-inventory',
-            color: 'text-purple-600',
-            bgColor: 'bg-purple-50',
-            borderColor: 'border-purple-200',
+            color: 'text-purple-100',
+            gradient: 'from-purple-500 to-purple-700',
             available: true
         },
         {
             id: '4',
             title: 'Online Inventory',
-            description: 'Real-time inventory management with cloud sync',
+            description: 'Real-time cloud inventory management',
             icon: Package,
             route: '/online-inventory',
-            color: 'text-orange-600',
-            bgColor: 'bg-orange-50',
-            borderColor: 'border-orange-200',
+            color: 'text-orange-100',
+            gradient: 'from-orange-500 to-orange-700',
             available: true
         },
         {
             id: '5',
             title: 'Barcode Mapping',
-            description: 'Map and manage product barcodes for quick scanning',
+            description: 'Link products to barcodes quickly',
             icon: Scan,
             route: '/barcode-mapping-mobile',
-            color: 'text-indigo-600',
-            bgColor: 'bg-indigo-50',
-            borderColor: 'border-indigo-200',
+            color: 'text-indigo-100',
+            gradient: 'from-indigo-500 to-indigo-700',
             available: true
         }
     ];
@@ -84,81 +78,66 @@ const MobileUI = () => {
     };
 
     return (
-        <div className={`min-h-screen ${isMobile ? 'pb-20' : ''}`}>
-            {isMobile && <MobileHeader title="Mobile UI" showBack={true} />}
+        <div className={`min-h-screen bg-neutral-900 text-white ${isMobile ? 'pb-24' : ''}`}>
+            {isMobile && <MobileHeader title="Mobile Dashboard" showBack={false} />}
 
-            <div className={`max-w-6xl mx-auto ${isMobile ? 'px-4 pt-4' : 'p-8'}`}>
-                {/* Header */}
-                {!isMobile && (
-                    <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">📱 Mobile UI Features</h1>
-                        <p className="text-gray-600">Access all mobile inventory management tools</p>
-                    </div>
-                )}
-
-                {/* Mobile Hero Card (only on mobile) */}
-                {isMobile && (
-                    <div className="mb-6 p-6 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-2xl">
-                        <div className="flex items-center gap-3 mb-3">
-                            <Smartphone size={32} />
-                            <h2 className="text-2xl font-bold">Mobile Tools</h2>
-                        </div>
-                        <p className="text-blue-100">Optimized inventory management for mobile devices</p>
-                    </div>
-                )}
+            <div className={`max-w-2xl mx-auto ${isMobile ? 'px-4 pt-6' : 'p-8'}`}>
+                {/* Welcome Section */}
+                <div className="mb-8 animate-in fade-in slide-in-from-top duration-500">
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+                        Welcome,
+                    </h1>
+                    <p className="text-slate-400 text-sm mt-1">Select a tool to get started</p>
+                </div>
 
                 {/* Features Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                    {features.map((feature) => (
+                <div className="grid grid-cols-1 gap-4">
+                    {features.map((feature, index) => (
                         <div
                             key={feature.id}
                             onClick={() => handleFeatureClick(feature)}
                             className={`
-                                relative p-6 rounded-xl border-2 shadow-sm transition-all
-                                ${feature.available ? 'cursor-pointer hover:shadow-lg hover:scale-105' : 'opacity-60 cursor-not-allowed'}
-                                ${feature.bgColor} ${feature.borderColor}
+                                relative p-5 rounded-2xl cursor-pointer overflow-hidden group
+                                bg-neutral-800/50 backdrop-blur-md border border-white/5
+                                hover:border-white/10 transition-all duration-300 active:scale-[0.98]
                             `}
+                            style={{ animationDelay: `${index * 100}ms` }}
                         >
-                            {/* Icon */}
-                            <div className={`w-14 h-14 rounded-xl ${feature.bgColor} ${feature.color} flex items-center justify-center mb-4 border ${feature.borderColor}`}>
-                                <feature.icon size={28} />
-                            </div>
+                            {/* Hover Gradient Overlay */}
+                            <div className={`absolute inset-0 bg-gradient-to-r ${feature.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
 
-                            {/* Title & Description */}
-                            <h3 className={`text-lg font-bold mb-2 ${feature.color}`}>
-                                {feature.title}
-                            </h3>
-                            <p className="text-sm text-gray-600 mb-4">
-                                {feature.description}
-                            </p>
+                            <div className="flex items-center gap-5 relative z-10">
+                                {/* Icon Box */}
+                                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center shadow-lg`}>
+                                    <feature.icon size={26} className="text-white" />
+                                </div>
 
-                            {/* Status Badge */}
-                            {!feature.available && (
-                                <span className="absolute top-4 right-4 px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full">
-                                    Coming Soon
-                                </span>
-                            )}
+                                {/* Text Content */}
+                                <div className="flex-1">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <h3 className="font-bold text-lg text-white group-hover:text-blue-200 transition-colors">
+                                            {feature.title}
+                                        </h3>
+                                        {!feature.available && (
+                                            <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-500 text-[10px] font-bold uppercase rounded-full">
+                                                Soon
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-slate-400 text-sm leading-tight group-hover:text-slate-300 transition-colors">
+                                        {feature.description}
+                                    </p>
+                                </div>
 
-                            {/* Arrow */}
-                            {feature.available && (
-                                <div className={`flex items-center gap-2 ${feature.color} font-semibold text-sm`}>
-                                    Open
+                                {/* Arrow */}
+                                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-500 group-hover:bg-white/10 group-hover:text-white transition-all">
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                     </svg>
                                 </div>
-                            )}
+                            </div>
                         </div>
                     ))}
-                </div>
-
-                {/* Info Section */}
-                <div className="mt-8 p-6 bg-gray-50 rounded-xl border border-gray-200">
-                    <h3 className="font-semibold text-gray-900 mb-2">ℹ️ About Mobile UI</h3>
-                    <p className="text-sm text-gray-600">
-                        These mobile-optimized tools are designed for warehouse workers and inventory managers on the go.
-                        Features include offline support, barcode scanning, and real-time synchronization.
-                    </p>
                 </div>
             </div>
         </div>

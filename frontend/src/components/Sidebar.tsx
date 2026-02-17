@@ -23,7 +23,7 @@ const Sidebar = () => {
     }
 
     const navItems = [
-        { icon: Home, label: 'Dashboard', path: '/' },
+        { icon: Home, label: 'Dashboard', path: '/dashboard' },
         { icon: Database, label: 'Master Data', path: '/master-data' },
         { icon: Clock, label: 'Recent Inventory', path: '/recent-inventory' },
         { icon: ScanBarcode, label: 'Barcode Mapping', path: '/barcode-mapping' },

@@ -67,10 +67,17 @@ const Login = () => {
             const userData = response.data.user;
             sessionStorage.setItem('user', JSON.stringify(userData));
 
+            // Check for Admin privileges
+            if (userData.role !== 'admin') {
+                setError('Access Denied: You do not have permission to access the Admin Dashboard.');
+                setIsLoading(false);
+                return;
+            }
+
             // Sync global user state
             updateCurrentUser(userData);
 
-            navigate('/');
+            navigate('/dashboard');
         } catch (err: any) {
             setError(err.response?.data?.message || 'Login failed');
         } finally {

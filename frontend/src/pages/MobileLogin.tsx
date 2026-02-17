@@ -65,8 +65,10 @@ const MobileLogin = () => {
             const { token, user } = response.data;
 
             // Check if user has mobile access
-            if (user.role !== 'mobile_user' && user.role !== 'worker') {
-                setError('This account does not have mobile access. Please use the admin login.');
+            // Admin is allowed to access mobile UI
+            const allowedRoles = ['mobile_user', 'worker', 'admin'];
+            if (!allowedRoles.includes(user.role)) {
+                setError('This account does not have mobile access.');
                 setLoading(false);
                 return;
             }
