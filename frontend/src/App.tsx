@@ -51,29 +51,34 @@ function App() {
             <Route path="/mobile-login" element={<MobileLogin />} />
             <Route path="/mobile-signup" element={<MobileSignup />} />
 
-            {/* Admin Routes - Protected */}
+            {/* Admin Restricted Routes (Admin & Office User) */}
             <Route element={<ProtectedRoute redirectPath="/login" allowedRoles={['admin', 'user']} />}>
               <Route element={<DashboardLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/master-data" element={<MasterData />} />
                 <Route path="/recent-inventory" element={<RecentInventory />} />
                 <Route path="/barcode-mapping" element={<BarcodeMapping />} />
+                <Route path="/settings" element={<Settings />} />
+              </Route>
+            </Route>
+
+            {/* Mobile Restricted Routes (Admin, Mobile User, Worker) */}
+            <Route element={<ProtectedRoute redirectPath="/mobile-login" allowedRoles={['admin', 'mobile_user', 'worker']} />}>
+              <Route element={<DashboardLayout />}>
+                <Route path="/mobile-ui" element={<MobileUI />} />
+                <Route path="/barcode-mapping-mobile" element={<BarcodeMappingMobile />} />
+                <Route path="/mobile-settings" element={<MobileSettings />} />
+              </Route>
+            </Route>
+
+            {/* Shared / Universal Routes (Accessible by All Authenticated Roles) */}
+            <Route element={<ProtectedRoute redirectPath="/login" allowedRoles={['admin', 'user', 'mobile_user', 'worker']} />}>
+              <Route element={<DashboardLayout />}>
                 <Route path="/inventory-list" element={<InventoryList />} />
                 <Route path="/locations" element={<Locations />} />
                 <Route path="/offline-inventory" element={<OfflineInventory />} />
                 <Route path="/online-inventory" element={<OnlineInventory />} />
-                <Route path="/settings" element={<Settings />} />
                 <Route path="/profile" element={<Profile />} />
-              </Route>
-            </Route>
-
-            {/* Mobile Routes - Protected */}
-            <Route element={<ProtectedRoute redirectPath="/mobile-login" allowedRoles={['admin', 'mobile_user', 'worker']} />}>
-              <Route element={<DashboardLayout />}>
-                {/* Mobile specific pages, reusing DashboardLayout which handles hiding sidebar/header */}
-                <Route path="/mobile-ui" element={<MobileUI />} />
-                <Route path="/barcode-mapping-mobile" element={<BarcodeMappingMobile />} />
-                <Route path="/mobile-settings" element={<MobileSettings />} />
               </Route>
             </Route>
 
