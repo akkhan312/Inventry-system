@@ -29,6 +29,13 @@ interface Location {
     name: string;
 }
 
+interface MasterProduct {
+    id: string;
+    name: string;
+    sku: string;
+    barcode?: string | null;
+}
+
 function getPendingSubmissions(): PendingSubmission[] {
     try {
         const raw = localStorage.getItem(PENDING_STORAGE_KEY);
@@ -66,6 +73,11 @@ const OfflineInventory = () => {
     const [showSavePopup, setShowSavePopup] = useState(false); // "Save to Device" triggers this
     const [showFinalSubmitPopup, setShowFinalSubmitPopup] = useState(false);
     const [showQtyPopup, setShowQtyPopup] = useState(false); // For "Qty Counts" button
+    const [showUnknownPopup, setShowUnknownPopup] = useState(false);
+    const [unknownBarcode, setUnknownBarcode] = useState('');
+
+    // Master Data
+    const [masterProducts, setMasterProducts] = useState<MasterProduct[]>([]);
 
     // Loading/Sync State
     const [isSyncing, setIsSyncing] = useState(false);
@@ -75,6 +87,8 @@ const OfflineInventory = () => {
     useEffect(() => {
         // Load locations
         fetchLocations();
+        // Load master products for lookup
+        fetchMasterProducts();
         setPendingCount(getPendingSubmissions().length);
 
         // Load saved state (if any) to resume session
@@ -116,11 +130,27 @@ const OfflineInventory = () => {
                 setLocations(JSON.parse(cached));
             }
             // Fetch fresh
-            const response = await api.get('/mobile/locations');
+            const response = await api.get('/api/mobile/locations'); // Adjusted path if needed, or use existing /mobile/locations if valid
             setLocations(response.data);
             localStorage.setItem('cached_locations', JSON.stringify(response.data));
         } catch (err) {
             console.error('Failed to fetch locations:', err);
+        }
+    };
+
+    const fetchMasterProducts = async () => {
+        try {
+            // Check cache first
+            const cached = localStorage.getItem('cached_master_products');
+            if (cached) {
+                setMasterProducts(JSON.parse(cached));
+            }
+            // Fetch fresh
+            const response = await api.get('/inventory');
+            setMasterProducts(response.data);
+            localStorage.setItem('cached_master_products', JSON.stringify(response.data));
+        } catch (err) {
+            console.error('Failed to fetch master products:', err);
         }
     };
 
@@ -136,6 +166,30 @@ const OfflineInventory = () => {
             return;
         }
 
+        // Check if there is a pending submission for this location (Resume logic)
+        const pending = getPendingSubmissions();
+        const existingPending = pending.find(p => p.locationId === selectedLocation);
+
+        if (existingPending) {
+            const confirmResume = window.confirm(`Found a pending inventory for this location (${existingPending.inventoryName}). Do you want to resume it?`);
+            if (confirmResume) {
+                // Resume session
+                setCounts(existingPending.items);
+                setInventoryName(existingPending.inventoryName);
+                setInventoryDate(existingPending.inventoryDate);
+                setCountedBy(existingPending.countedBy || '');
+                setEmployeeId(existingPending.employeeId || '');
+                setIsInventoryActive(true);
+                setShowCreatePopup(false);
+
+                // Remove from pending so we don't duplicate on next save
+                const newPending = pending.filter(p => p.id !== existingPending.id);
+                setPendingSubmissions(newPending);
+                setPendingCount(newPending.length);
+                return;
+            }
+        }
+
         const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         setInventoryDate(dateStr);
         setIsInventoryActive(true);
@@ -147,15 +201,43 @@ const OfflineInventory = () => {
         const code = barcodeInput.trim();
         if (!code) return;
 
-        setCounts(prev => {
-            const existing = prev.find(item => item.barcode === code);
-            if (existing) {
-                return prev.map(item => item.barcode === code ? { ...item, quantity: item.quantity + 1 } : item);
-            } else {
-                return [...prev, { barcode: code, name: `Item ${prev.length + 1}`, quantity: 1 }];
+        // 1. Check if already in current counts (increment)
+        const existingInCounts = counts.find(item => item.barcode === code);
+        if (existingInCounts) {
+            setCounts(prev => prev.map(item => item.barcode === code ? { ...item, quantity: item.quantity + 1 } : item));
+            setBarcodeInput('');
+            return;
+        }
+
+        // 2. Check Master Data
+        // Match against sku OR barcode field
+        const masterItem = masterProducts.find(p => p.sku === code || p.barcode === code);
+
+        if (masterItem) {
+            // Found in master data - add with correct name
+            setCounts(prev => [...prev, { barcode: code, name: masterItem.name, quantity: 1 }]);
+            setBarcodeInput('');
+        } else {
+            // 3. Not found - Prompt user
+            setUnknownBarcode(code);
+            setShowUnknownPopup(true);
+            // Allow them to decide in the popup
+        }
+    };
+
+    const handleUnknownProductChoice = (shouldAdd: boolean) => {
+        if (shouldAdd) {
+            // Add with unknown name (user can edit later? or we just default)
+            // For now, prompt for name or default to "Unknown Item"
+            const name = prompt("Enter product name:", "New Item");
+            if (name) {
+                setCounts(prev => [...prev, { barcode: unknownBarcode, name: name, quantity: 1 }]);
             }
-        });
+        }
+        // Whether added or not, clear input and close popup
         setBarcodeInput('');
+        setShowUnknownPopup(false);
+        setUnknownBarcode('');
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -574,6 +656,39 @@ const OfflineInventory = () => {
                                 className="bg-[#0052CC] text-white py-2 px-6 rounded-md font-semibold hover:bg-[#0747A6] transition-all"
                             >
                                 Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Unknown Product Popup */}
+            {showUnknownPopup && (
+                <div className="fixed inset-0 bg-[#091E42]/50 flex items-center justify-center z-50 p-3 sm:p-4">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-[95vw] sm:max-w-sm md:max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-[#DFE1E6]">
+                            <h3 className="text-xl font-semibold text-[#172B4D]">Product Not Found</h3>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <p className="text-[#172B4D]">
+                                Barcode <strong>{unknownBarcode}</strong> was not found in the master data.
+                            </p>
+                            <p className="text-[#172B4D]">
+                                Do you want to add this product to the current inventory count?
+                            </p>
+                        </div>
+                        <div className="p-4 bg-[#F4F5F7] flex gap-3 justify-end rounded-b-lg">
+                            <button
+                                onClick={() => handleUnknownProductChoice(false)}
+                                className="flex-1 bg-white text-[#172B4D] border border-[#DFE1E6] py-2 px-4 rounded-md font-semibold hover:bg-[#DFE1E6] transition-all"
+                            >
+                                No
+                            </button>
+                            <button
+                                onClick={() => handleUnknownProductChoice(true)}
+                                className="flex-1 bg-[#0052CC] text-white py-2 px-4 rounded-md font-semibold hover:bg-[#0747A6] transition-all"
+                            >
+                                Yes
                             </button>
                         </div>
                     </div>
