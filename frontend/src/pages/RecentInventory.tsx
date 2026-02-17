@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { RefreshCw, Download, Loader2 } from "lucide-react";
+import { RefreshCw, Download, Loader2, Trash2 } from "lucide-react";
 import api from "../services/api";
 
 interface InventoryHistory {
@@ -43,6 +43,8 @@ const RecentInventory: React.FC = () => {
     const [selectedDetail, setSelectedDetail] = useState<SubmissionDetail | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailsLoading, setIsDetailsLoading] = useState(false);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         fetchHistory();
@@ -71,6 +73,31 @@ const RecentInventory: React.FC = () => {
             console.error("Error fetching submission details:", error);
         } finally {
             setIsDetailsLoading(false);
+        }
+    };
+
+    const handleDeleteClick = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        setDeleteId(id);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteId) return;
+        setIsDeleting(true);
+        try {
+            await api.delete(`/inventory/submissions/${deleteId}`);
+            // Remove from local state
+            setHistory(prev => prev.filter(h => h.id !== deleteId));
+            if (selectedId === deleteId) {
+                setSelectedId(null);
+                setSelectedDetail(null);
+            }
+            setDeleteId(null);
+        } catch (error) {
+            console.error("Error deleting submission:", error);
+            alert("Failed to delete inventory submission.");
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -116,6 +143,9 @@ const RecentInventory: React.FC = () => {
                                     <th className="text-left py-3 px-4 bg-[#f8f9fa] font-semibold border-b-2 border-[#E1E8ED] whitespace-nowrap">
                                         Employee ID
                                     </th>
+                                    <th className="text-center py-3 px-4 bg-[#f8f9fa] font-semibold border-b-2 border-[#E1E8ED] whitespace-nowrap w-[60px]">
+                                        Actions
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -145,6 +175,15 @@ const RecentInventory: React.FC = () => {
                                             <td className="py-3 px-4">{new Date(inv.submittedAt).toLocaleString()}</td>
                                             <td className="py-3 px-4">{getCountedBy(inv)}</td>
                                             <td className="py-3 px-4">{getEmployeeId(inv)}</td>
+                                            <td className="py-3 px-4 text-center">
+                                                <button
+                                                    onClick={(e) => handleDeleteClick(e, inv.id)}
+                                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
+                                                    title="Delete Inventory"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))
                                 )}
@@ -228,6 +267,37 @@ const RecentInventory: React.FC = () => {
                     </div>
                 </section>
             </div>
+            {/* Delete Confirmation Popup */}
+            {deleteId && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-[#E1E8ED]">
+                            <h3 className="text-xl font-semibold text-[#2C3E50]">Confirm Delete</h3>
+                        </div>
+                        <div className="p-6">
+                            <p className="text-[#2C3E50]">Are you sure do delete this inventory record?</p>
+                            <p className="text-sm text-red-600 mt-2">This action cannot be undone.</p>
+                        </div>
+                        <div className="p-4 bg-[#F8F9FA] flex gap-3 justify-end rounded-b-lg">
+                            <button
+                                onClick={() => setDeleteId(null)}
+                                disabled={isDeleting}
+                                className="flex-1 bg-white text-[#2C3E50] border border-[#DFE1E6] py-2 px-4 rounded-md font-semibold hover:bg-[#E1E8ED] transition-all disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                disabled={isDeleting}
+                                className="flex-1 bg-red-600 text-white py-2 px-4 rounded-md font-semibold hover:bg-red-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {isDeleting ? <Loader2 size={16} className="animate-spin" /> : null}
+                                {isDeleting ? 'Deleting...' : 'Delete'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
