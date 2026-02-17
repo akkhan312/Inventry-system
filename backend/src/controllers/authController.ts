@@ -99,12 +99,15 @@ export const register = async (req: Request, res: Response) => {
         const validRoles = ['admin', 'user', 'mobile_user', 'worker'];
         const userRole = role && validRoles.includes(role) ? role : 'user';
 
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
         await prisma.user.create({
             data: {
                 username,
                 name: name || username,
                 email,
-                password,
+                password: hashedPassword,
                 role: userRole,
                 status: 'active'
             }
