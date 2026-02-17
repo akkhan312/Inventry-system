@@ -68,7 +68,8 @@ const Login = () => {
             sessionStorage.setItem('user', JSON.stringify(userData));
 
             // Check for Admin privileges
-            if (userData.role !== 'admin') {
+            const allowedAdminRoles = ['admin', 'user'];
+            if (!allowedAdminRoles.includes(userData.role)) {
                 setError('Access Denied: You do not have permission to access the Admin Dashboard.');
                 setIsLoading(false);
                 return;
