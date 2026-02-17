@@ -4,6 +4,8 @@ import { useIsMobile } from '../hooks/useMediaQuery';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
+import { X } from 'lucide-react';
+
 interface ScannedRow {
   itemName: string;
   barcode: string;
@@ -15,6 +17,13 @@ interface Location {
   name: string;
   address?: string;
   type?: string;
+}
+
+interface MasterProduct {
+  id: string;
+  name: string;
+  sku: string;
+  barcode?: string | null;
 }
 
 const OnlineInventory = () => {
@@ -37,6 +46,11 @@ const OnlineInventory = () => {
   const [employeeId, setEmployeeId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Master Data & Unknown Barcode
+  const [masterProducts, setMasterProducts] = useState<MasterProduct[]>([]);
+  const [showUnknownPopup, setShowUnknownPopup] = useState(false);
+  const [unknownBarcode, setUnknownBarcode] = useState('');
+
   useEffect(() => {
     const fetchLocations = async () => {
       try {
@@ -51,12 +65,59 @@ const OnlineInventory = () => {
             const parsed = JSON.parse(cached) as Location[];
             setLocations(parsed);
             if (parsed.length > 0 && !locationId) setLocationId(parsed[0].id);
-          } catch (_) {}
+          } catch (_) { }
         }
       }
     };
+
+    const fetchMasterProducts = async () => {
+      try {
+        // Check cache first
+        const cached = localStorage.getItem('cached_master_products');
+        if (cached) {
+          setMasterProducts(JSON.parse(cached));
+        }
+        // Fetch fresh
+        const response = await api.get('/inventory');
+        setMasterProducts(response.data);
+        localStorage.setItem('cached_master_products', JSON.stringify(response.data));
+      } catch (err) {
+        console.error('Failed to fetch master products:', err);
+      }
+    };
+
     fetchLocations();
+    fetchMasterProducts();
+
+    // Recover session
+    const savedRows = localStorage.getItem('online_inv_rows');
+    const savedName = localStorage.getItem('online_inv_name');
+    const savedDate = localStorage.getItem('online_inv_date');
+    const savedLoc = localStorage.getItem('online_inv_loc');
+
+    if (savedRows && savedName) {
+      setRows(JSON.parse(savedRows));
+      setInventoryName(savedName);
+      setInventoryDate(savedDate || new Date().toLocaleDateString());
+      if (savedLoc) setLocationId(savedLoc);
+      setIsInventoryActive(true);
+      const parsedRows = JSON.parse(savedRows);
+      setScannedItemCount(parsedRows.length);
+    }
   }, []);
+
+  // Persistence Effect
+  useEffect(() => {
+    if (isInventoryActive) {
+      localStorage.setItem('online_inv_rows', JSON.stringify(rows));
+      localStorage.setItem('online_inv_name', inventoryName);
+      localStorage.setItem('online_inv_date', inventoryDate);
+      localStorage.setItem('online_inv_loc', locationId);
+    } else {
+      // Clear if not active (successfully submitted or cancelled)
+      // Check if we just submitted/cancelled
+    }
+  }, [rows, inventoryName, inventoryDate, locationId, isInventoryActive]);
 
   useEffect(() => {
     if (locations.length > 0 && !locationId) setLocationId(locations[0].id);
@@ -91,14 +152,62 @@ const OnlineInventory = () => {
     const barcode = barcodeInput.trim();
     if (!barcode) return;
 
-    const nextCount = itemCount + 1;
-    setItemCount(nextCount);
-    setScannedItemCount((c) => c + 1);
-    setRows((prev) => [
-      ...prev,
-      { itemName: `Item ${nextCount}`, barcode, quantity: 1 },
-    ]);
+    // 1. Check if already in current list -> Increment
+    const existingIndex = rows.findIndex(r => r.barcode === barcode);
+    if (existingIndex >= 0) {
+      setRows(prev => {
+        const newRows = [...prev];
+        newRows[existingIndex].quantity += 1;
+        return newRows;
+      });
+      setBarcodeInput('');
+      return;
+    }
+
+    // 2. Lookup in Master Data
+    const masterItem = masterProducts.find(p => p.sku === barcode || p.barcode === barcode);
+
+    if (masterItem) {
+      setRows(prev => [
+        ...prev,
+        { itemName: masterItem.name, barcode, quantity: 1 },
+      ]);
+      setScannedItemCount((c) => c + 1);
+      setBarcodeInput('');
+    } else {
+      // 3. Not found -> Popup
+      setUnknownBarcode(barcode);
+      setShowUnknownPopup(true);
+    }
+  };
+
+  const handleUnknownProductChoice = (shouldAdd: boolean) => {
+    if (shouldAdd) {
+      const name = prompt("Enter product name:", "New Item");
+      if (name) {
+        setRows(prev => [
+          ...prev,
+          { itemName: name, barcode: unknownBarcode, quantity: 1 }
+        ]);
+        setScannedItemCount(c => c + 1);
+      }
+    }
+    setUnknownBarcode('');
     setBarcodeInput('');
+    setShowUnknownPopup(false);
+  };
+
+  const clearLocalSession = () => {
+    setRows([]);
+    setItemCount(0);
+    setScannedItemCount(0);
+    setInventoryName('');
+    setIsInventoryActive(false);
+    localStorage.removeItem('online_inv_rows');
+    localStorage.removeItem('online_inv_name');
+    localStorage.removeItem('online_inv_date');
+    localStorage.removeItem('online_inv_loc');
+    navigate('/mobile-ui');
   };
 
   const submitInventory = async () => {
@@ -131,12 +240,7 @@ const OnlineInventory = () => {
       });
       alert('Inventory successfully submitted!');
       hidePopup(setShowSubmitPopup);
-      setRows([]);
-      setItemCount(0);
-      setScannedItemCount(0);
-      setInventoryName('');
-      setIsInventoryActive(false);
-      navigate('/mobile-ui');
+      clearLocalSession();
     } catch (err: unknown) {
       console.error('Sync failed:', err);
       alert('Submit failed. Please check your connection and try again.');
@@ -250,9 +354,8 @@ const OnlineInventory = () => {
           >
             Qty Counts
             <span
-              className={`absolute -top-2 -right-2 bg-[#DE350B] text-white rounded-full py-0.5 px-1.5 text-xs font-bold min-w-[22px] text-center ${
-                scannedItemCount === 0 ? 'hidden' : ''
-              }`}
+              className={`absolute -top-2 -right-2 bg-[#DE350B] text-white rounded-full py-0.5 px-1.5 text-xs font-bold min-w-[22px] text-center ${scannedItemCount === 0 ? 'hidden' : ''
+                }`}
             >
               {scannedItemCount}
             </span>
@@ -269,15 +372,13 @@ const OnlineInventory = () => {
 
       {/* Popup: Create Inventory */}
       <div
-        className={`fixed inset-0 bg-[rgba(9,30,66,0.54)] flex justify-center items-center z-[1000] transition-all duration-250 ${
-          showCreatePopup ? 'opacity-100 visible' : 'opacity-0 invisible'
-        }`}
+        className={`fixed inset-0 bg-[rgba(9,30,66,0.54)] flex justify-center items-center z-[1000] transition-all duration-250 ${showCreatePopup ? 'opacity-100 visible' : 'opacity-0 invisible'
+          }`}
         onClick={() => showCreatePopup && hidePopup(setShowCreatePopup)}
       >
         <div
-          className={`bg-white rounded-lg shadow-lg w-[90%] max-w-[400px] max-h-[90vh] flex flex-col transition-transform duration-250 ${
-            showCreatePopup ? 'scale-100 translate-y-0' : 'scale-95 translate-y-2.5'
-          }`}
+          className={`bg-white rounded-lg shadow-lg w-[90%] max-w-[400px] max-h-[90vh] flex flex-col transition-transform duration-250 ${showCreatePopup ? 'scale-100 translate-y-0' : 'scale-95 translate-y-2.5'
+            }`}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="pt-6 px-6 pb-2 border-b border-[#DFE1E6]">
@@ -306,9 +407,8 @@ const OnlineInventory = () => {
                   setInventoryName(e.target.value);
                   setNameInputError(false);
                 }}
-                className={`block w-full py-3 px-4 text-base border-2 rounded-md focus:outline-none focus:ring-[3px] focus:ring-[rgba(0,82,204,0.2)] ${
-                  nameInputError ? 'border-[#DE350B]' : 'border-[#DFE1E6] focus:border-[#0052CC]'
-                }`}
+                className={`block w-full py-3 px-4 text-base border-2 rounded-md focus:outline-none focus:ring-[3px] focus:ring-[rgba(0,82,204,0.2)] ${nameInputError ? 'border-[#DE350B]' : 'border-[#DFE1E6] focus:border-[#0052CC]'
+                  }`}
                 placeholder="Add inventory name"
               />
             </div>
@@ -354,15 +454,13 @@ const OnlineInventory = () => {
 
       {/* Popup: Submit Confirmation */}
       <div
-        className={`fixed inset-0 bg-[rgba(9,30,66,0.54)] flex justify-center items-center z-[1000] transition-all duration-250 ${
-          showSubmitPopup ? 'opacity-100 visible' : 'opacity-0 invisible'
-        }`}
+        className={`fixed inset-0 bg-[rgba(9,30,66,0.54)] flex justify-center items-center z-[1000] transition-all duration-250 ${showSubmitPopup ? 'opacity-100 visible' : 'opacity-0 invisible'
+          }`}
         onClick={() => showSubmitPopup && hidePopup(setShowSubmitPopup)}
       >
         <div
-          className={`bg-white rounded-lg shadow-lg w-[90%] max-w-[400px] max-h-[90vh] flex flex-col transition-transform duration-250 ${
-            showSubmitPopup ? 'scale-100 translate-y-0' : 'scale-95 translate-y-2.5'
-          }`}
+          className={`bg-white rounded-lg shadow-lg w-[90%] max-w-[400px] max-h-[90vh] flex flex-col transition-transform duration-250 ${showSubmitPopup ? 'scale-100 translate-y-0' : 'scale-95 translate-y-2.5'
+            }`}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="pt-6 px-6 pb-2 border-b border-[#DFE1E6]">
@@ -392,26 +490,63 @@ const OnlineInventory = () => {
         </div>
       </div>
     </div>
-  );
+
+      {/* Popup: Unknown Product */ }
+  <div
+    className={`fixed inset-0 bg-[rgba(9,30,66,0.54)] flex justify-center items-center z-[1000] transition-all duration-250 ${showUnknownPopup ? 'opacity-100 visible' : 'opacity-0 invisible'
+      }`}
+    onClick={() => false}
+  >
+    <div
+      className={`bg-white rounded-lg shadow-lg w-[90%] max-w-[400px] flex flex-col transition-transform duration-250 ${showUnknownPopup ? 'scale-100 translate-y-0' : 'scale-95 translate-y-2.5'
+        }`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="pt-6 px-6 pb-2 border-b border-[#DFE1E6]">
+        <h3 className="text-xl font-semibold">Product Not Found</h3>
+      </div>
+      <div className="p-6">
+        <p className="mb-2">Barcode <strong>{unknownBarcode}</strong> was not found in the master data.</p>
+        <p>Do you want to add this product?</p>
+      </div>
+      <div className="pb-6 px-6 pt-2 flex gap-2 justify-end">
+        <button
+          type="button"
+          onClick={() => handleUnknownProductChoice(false)}
+          className="flex-1 font-semibold text-[#172B4D] bg-[#F4F5F7] border border-[#DFE1E6] py-3 px-5 rounded-md cursor-pointer"
+        >
+          No
+        </button>
+        <button
+          type="button"
+          onClick={() => handleUnknownProductChoice(true)}
+          className="flex-1 font-semibold text-white bg-[#0052CC] py-3 px-5 rounded-md cursor-pointer"
+        >
+          Yes
+        </button>
+      </div>
+    </div>
+  </div>
+    </div >
 
   return (
-    <div className="min-h-screen bg-[#F4F5F7] overflow-hidden">
-      {isMobile ? (
-        <>
-          <div className="sticky top-0 z-10">
-            <MobileHeader title="Online Physical Count" showBack onBackClick={() => navigate('/mobile-ui')} />
-          </div>
-          <div className="h-[calc(100vh-56px)] overflow-auto">{content}</div>
-        </>
-      ) : (
-        <div className="p-4 flex justify-center">
-          <div className="h-[90vh] min-h-[600px] w-full overflow-hidden rounded-lg border border-[#DFE1E6]">
-            {content}
-          </div>
+  <div className="min-h-screen bg-[#F4F5F7] overflow-hidden">
+    {isMobile ? (
+      <>
+        <div className="sticky top-0 z-10">
+          <MobileHeader title="Online Physical Count" showBack onBackClick={() => navigate('/mobile-ui')} />
         </div>
-      )}
-    </div>
-  );
+        <div className="h-[calc(100vh-56px)] overflow-auto">{content}</div>
+      </>
+    ) : (
+      <div className="p-4 flex justify-center">
+        <div className="h-[90vh] min-h-[600px] w-full overflow-hidden rounded-lg border border-[#DFE1E6]">
+          {content}
+        </div>
+      </div>
+    )}
+  </div>
+);
 };
 
 export default OnlineInventory;
