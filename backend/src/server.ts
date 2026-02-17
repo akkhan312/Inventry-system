@@ -1,4 +1,4 @@
-import express, { json } from 'express';
+import express, { json, Request, Response, NextFunction } from 'express';
 import compression from 'compression';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
@@ -22,15 +22,18 @@ const PORT = process.env.PORT || 5000;
 
 app.use(compression());
 
-// Manual CORS Middleware
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+// Manual CORS Middleware - MUST BE BEFORE ALL OTHER MIDDLEWARE
+app.use((req: Request, res: Response, next: NextFunction) => {
+    console.log(`[CORS DEBUG] ${req.method} ${req.url} - Origin: ${req.headers.origin}`);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
 
     // Handle preflight
     if (req.method === 'OPTIONS') {
-        return res.sendStatus(200);
+        res.status(200).end();
+        return;
     }
     next();
 });
@@ -61,7 +64,7 @@ const server = app.listen(Number(PORT), '0.0.0.0', () => {
         .then(() => {
             console.log('Connected to MongoDB via Prisma');
         })
-        .catch((err) => {
+        .catch((err: any) => {
             console.error('Database connection error:', err);
         });
 

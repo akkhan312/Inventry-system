@@ -41,7 +41,7 @@ export const login = async (req: Request, res: Response) => {
         );
 
         // Send login notification email (async, don't wait for it)
-        const ipAddress = req.ip || req.connection.remoteAddress || 'Unknown';
+        const ipAddress = req.ip || (req.socket as any).remoteAddress || 'Unknown';
         sendLoginNotification(user.email, user.name || user.username, ipAddress).catch(err => {
             console.error('Failed to send login notification:', err);
         });
