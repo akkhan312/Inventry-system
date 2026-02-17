@@ -23,27 +23,8 @@ const PORT = process.env.PORT || 5000;
 
 app.use(compression());
 
-// CORS Configuration
-const allowedOrigins = [
-    'https://inventory.gstsa1.org',
-    'https://inventoryapi.gstsa1.org',
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://localhost:5000'
-];
-
 app.use(cors({
-    origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-
-        if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            console.log(`[CORS] Rejected origin: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: true, // Reflect the requesting origin (effectively "allow all" while supporting credentials)
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
