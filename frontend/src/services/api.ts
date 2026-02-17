@@ -1,7 +1,10 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 
+export const BASE_URL = 'https://inventoryapi.gstsa1.org';
+export const API_URL = `${BASE_URL}/api`;
+
 const api = axios.create({
-    baseURL: 'https://inventoryapi.gstsa1.org/api',
+    baseURL: API_URL,
 });
 
 // Add interceptor to include token in headers if it exists

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import api from '../services/api';
+import api, { BASE_URL } from '../services/api';
 import { Plus, X, Edit2, Trash2 } from 'lucide-react';
 
 /* ============================================================================
@@ -306,7 +306,7 @@ const SettingsPage: React.FC = () => {
                                             <div className="flex items-center gap-4">
                                                 <div className="w-10 h-10 rounded-full bg-[#4A90E2] flex items-center justify-center text-white font-bold text-sm shadow-md">
                                                     {user.avatar ? (
-                                                        <img src={`http://localhost:5000${user.avatar}`} alt={user.name} className="w-full h-full object-cover rounded-full" />
+                                                        <img src={`${BASE_URL}${user.avatar}`} alt={user.name} className="w-full h-full object-cover rounded-full" />
                                                     ) : (
                                                         user.name?.charAt(0).toUpperCase() || 'U'
                                                     )}

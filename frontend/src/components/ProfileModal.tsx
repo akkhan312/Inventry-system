@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Camera } from 'lucide-react';
 import { useDashboard } from '../context/DashboardContext';
-import api from '../services/api';
+import api, { BASE_URL } from '../services/api';
 
 interface ProfileModalProps {
     isOpen: boolean;
@@ -36,7 +36,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
                 newPassword: '',
                 confirmPassword: '',
             });
-            setAvatarPreview(currentUser.avatar ? `http://localhost:5000${currentUser.avatar}` : null);
+            setAvatarPreview(currentUser.avatar ? `${BASE_URL}${currentUser.avatar}` : null);
             setAvatarFile(null);
             setNotification(null);
         }

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import { useDashboard } from '../context/DashboardContext';
 import ProfileModal from './ProfileModal';
-import api from '../services/api';
+import api, { BASE_URL } from '../services/api';
 
 // Simple helper for relative time
 const formatRelativeTime = (date: Date) => {
@@ -141,7 +141,7 @@ const Header = () => {
                         >
                             <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium text-xs overflow-hidden">
                                 {currentUser?.avatar ? (
-                                    <img src={`http://localhost:5000${currentUser.avatar}`} alt="Profile" className="w-full h-full object-cover" />
+                                    <img src={`${BASE_URL}${currentUser.avatar}`} alt="Profile" className="w-full h-full object-cover" />
                                 ) : (
                                     currentUser?.username?.substring(0, 2).toUpperCase() || 'U'
                                 )}

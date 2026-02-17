@@ -12,7 +12,7 @@ import {
     LogOut
 } from 'lucide-react';
 import { useDashboard } from '../context/DashboardContext';
-import api from '../services/api';
+import api, { BASE_URL } from '../services/api';
 
 const MobileSettings = () => {
     const navigate = useNavigate();
@@ -140,7 +140,7 @@ const MobileSettings = () => {
                     <div className="relative group">
                         <div className="w-20 h-20 rounded-2xl bg-blue-50 border-2 border-blue-100 overflow-hidden flex items-center justify-center">
                             {currentUser?.avatar ? (
-                                <img src={`http://localhost:5000${currentUser.avatar}`} alt={currentUser.name} className="w-full h-full object-cover" />
+                                <img src={`${BASE_URL}${currentUser.avatar}`} alt={currentUser.name} className="w-full h-full object-cover" />
                             ) : (
                                 <User size={40} className="text-blue-400" />
                             )}
