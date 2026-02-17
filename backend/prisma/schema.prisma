@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  username  String   @unique
+  name      String?
+  email     String   @unique
+  password  String
+  avatar    String?
+  role      String   @default("user")
+  status    String   @default("active")
+  provider   String?  // google, facebook, microsoft, etc.
+  providerId String?
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  sku           String   @unique
+  category      String
+  description   String?  // optional item description
+  barcode       String?  // optional barcode / QR
+  hsnCode       String?  // Added for GST
+  gstRate       Float    @default(18.0) // Added for GST
+  unit          String   @default("pcs") // Added (kg, pcs, etc.) - UOM
+  quantity      Int
+  purchasePrice Float    @default(0.0) // Added - Unit Cost
+  salePrice     Float    @default(0.0) // Added
+  status        String   @default("in")
+  openingStock  Int      @default(0)
+  minStock      Int      @default(10)
+  reorderPoint  Int      @default(15)
+  location      String?  @default("Main Warehouse")
+  supplier      String?
+  batchNumber   String?
+  expiryDate    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([category])
+  @@index([status])
+}
+
+model Supplier {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String?
+  phone     String?
+  gstin     String?  // Supplier GST Number
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Customer {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String?
+  phone     String?
+  gstin     String?  // Customer GST Number
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  recipientId String?  @db.ObjectId // Optional: null means system-wide/everyone
+  title       String
+  message     String
+  type        String   @default("info") // info, warning, success, error
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([recipientId])
+  @@index([isRead])
+}
+
+model Location {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  address   String
+  type      String   // warehouse, store, distribution
+  manager   String?  // optional manager name
+  status    String   @default("active") // active, inactive, pending
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  submissions InventorySubmission[]
+}
+
+model InventorySubmission {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  locationId  String   @db.ObjectId
+  location    Location @relation(fields: [locationId], references: [id])
+  status      String   @default("offline") // online, offline
+  submittedAt DateTime @default(now())
+  name        String?  // optional inventory count name (e.g. "Warehouse A - End of Month")
+  countedBy   String?  // name of person who did the count
+  employeeId String?  // employee ID
+  items       InventoryItem[]
+}
+
+model InventoryItem {
+  id               String              @id @default(auto()) @map("_id") @db.ObjectId
+  submissionId     String              @db.ObjectId
+  submission       InventorySubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  sku              String
+  name             String
+  quantity         Int
+  expectedQuantity Int                 @default(0)
+}
+
+model BarcodeMapping {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  barcode         String   @unique
+  seriesNumber    String
+  item            String
+  quantity        Int
+  location        String
+  status          String   @default("pending") // mapped, pending
+  config          String?
+  manufactureDate String?
+  binLocation     String?
+  reference       String?
+  length          Float?
+  width           Float?
+  height          Float?
+  weight          Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
