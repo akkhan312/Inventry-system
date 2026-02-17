@@ -52,6 +52,12 @@ app.use(cors({
 
 app.use(compression());
 app.use(json());
+app.use((req, res, next) => {
+    console.log(`[DEBUG] ${req.method} ${req.url}`);
+    console.log('[DEBUG] Headers:', JSON.stringify(req.headers));
+    console.log('[DEBUG] Body:', JSON.stringify(req.body));
+    next();
+});
 app.use('/uploads', express.static('uploads'));
 
 // Routes

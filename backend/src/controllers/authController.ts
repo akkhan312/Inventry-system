@@ -6,11 +6,22 @@ import prisma from '../lib/prisma.js';
 import { sendLoginNotification, sendPasswordResetEmail } from '../services/emailService.js';
 import { createNotification } from './notificationController.js';
 
+import fs from 'fs';
+
 export const login = async (req: Request, res: Response) => {
     const { username, password, identifier } = req.body;
+
+    try {
+        fs.appendFileSync('server.log', `[${new Date().toISOString()}] Login Request: ${JSON.stringify(req.body)}\n`);
+    } catch (e) { console.error('Logging failed', e); }
+
     const loginInput = (identifier || username || '').trim();
 
     if (!loginInput || !password) {
+        try {
+            fs.appendFileSync('server.log', `[${new Date().toISOString()}] Login Failed: Missing input\n`);
+        } catch (e) { }
+        console.log('[DEBUG] Login failed: Missing input or password');
         return res.status(400).json({ message: 'Email/username and password are required' });
     }
 
