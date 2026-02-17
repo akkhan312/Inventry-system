@@ -4,7 +4,7 @@ import { useIsMobile } from '../hooks/useMediaQuery';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
-import { X } from 'lucide-react';
+import { X, ChevronLeft } from 'lucide-react';
 
 interface ScannedRow {
   itemName: string;
@@ -37,13 +37,6 @@ const OnlineInventory = () => {
   const [isInventoryActive, setIsInventoryActive] = useState(false);
   const [barcodeInput, setBarcodeInput] = useState('');
   const [rows, setRows] = useState<ScannedRow[]>([]);
-  const [itemCount, setItemCount] = useState(0);
-  const [scannedItemCount, setScannedItemCount] = useState(0);
-  const [nameInputError, setNameInputError] = useState(false);
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [locationId, setLocationId] = useState<string>('');
-  const [countedBy, setCountedBy] = useState('');
-  const [employeeId, setEmployeeId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Master Data & Unknown Barcode
@@ -146,6 +139,18 @@ const OnlineInventory = () => {
     setIsInventoryActive(true);
     setShowCreatePopup(false);
     setNameInputError(false);
+    setShowCreatePopup(false);
+    setNameInputError(false);
+  };
+
+  const handleBack = () => {
+    if (isInventoryActive) {
+      if (confirm("Are you sure you want to exit? Unsaved progress will be lost.")) {
+        clearLocalSession();
+      }
+    } else {
+      navigate('/mobile-ui');
+    }
   };
 
   const addScannedItem = () => {
@@ -157,7 +162,10 @@ const OnlineInventory = () => {
     if (existingIndex >= 0) {
       setRows(prev => {
         const newRows = [...prev];
-        newRows[existingIndex].quantity += 1;
+        newRows[existingIndex] = {
+          ...newRows[existingIndex],
+          quantity: newRows[existingIndex].quantity + 1
+        };
         return newRows;
       });
       setBarcodeInput('');
@@ -254,8 +262,12 @@ const OnlineInventory = () => {
   const content = (
     <div className="flex flex-col h-full max-w-[430px] mx-auto bg-white shadow-[0_10px_20px_-5px_rgba(9,30,66,0.25)]">
       {/* Header */}
-      <header className="bg-[#0052CC] text-white py-4 px-4 text-center flex-shrink-0 shadow-sm">
+      <header className="bg-[#0052CC] text-white p-4 text-center flex-shrink-0 shadow-sm flex items-center justify-between z-10">
+        <button onClick={handleBack} className="p-1 text-white hover:text-gray-200 rounded-lg hover:bg-white/10 transition-colors min-w-[40px] flex justify-center">
+          <ChevronLeft size={24} />
+        </button>
         <h1 className="text-lg font-semibold tracking-wide">Online Physical Count</h1>
+        <div className="w-10 min-w-[40px]"></div>
       </header>
 
       {/* Main scrollable content */}
@@ -534,7 +546,7 @@ const OnlineInventory = () => {
     {isMobile ? (
       <>
         <div className="sticky top-0 z-10">
-          <MobileHeader title="Online Physical Count" showBack onBackClick={() => navigate('/mobile-ui')} />
+          <MobileHeader title="Online Physical Count" showBack onBackClick={handleBack} />
         </div>
         <div className="h-[calc(100vh-56px)] overflow-auto">{content}</div>
       </>
