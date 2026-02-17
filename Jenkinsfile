@@ -13,7 +13,7 @@ pipeline {
                     branches: [[name: '*/dev']],
                     userRemoteConfigs: [[
                         credentialsId: 'dev_majid_new_github_credentials',
-                        url: 'https://github.com/NartechSolution/MES_GTRACK.git'
+                        url: 'https://github.com/NartechSolution/inventory-system-N.git'
                     ]]
                 )
             }
@@ -23,7 +23,7 @@ pipeline {
             steps {
                 echo 'Copying environment file to Backend folder...'
                 bat 'if not exist \"%WORKSPACE%\\backend\" mkdir \"%WORKSPACE%\\backend\"'
-                bat 'copy \"C:\\Program Files\\Jenkins\\jenkinsEnv\\mes_gtrack\\.env\" \"%WORKSPACE%\\backend\\.env\" /Y'
+                bat 'copy \"C:\\Program Files\\Jenkins\\jenkinsEnv\\inventory_system_N\\.env\" \"%WORKSPACE%\\backend\\.env\" /Y'
             }
         }
 
@@ -43,22 +43,6 @@ pipeline {
             }
         }
 
-        stage('📁 Install MES Public Site Dependencies') {
-            steps {
-                dir('MES_PUBLIC_SITE') {
-                    bat 'npm install --legacy-peer-deps'
-                }
-            }
-        }
-
-        stage('⚙️ Build MES Public Site') {
-            steps {
-                dir('MES_PUBLIC_SITE') {
-                    bat 'npm run build'
-                }
-            }
-        }
-
         stage('📁 Install Backend Dependencies') {
             steps {
                 dir('backend') {
@@ -72,21 +56,29 @@ pipeline {
                 dir('backend') {
                     script {
                         def status = bat(script: 'pm2 list', returnStdout: true).trim()
-                        if (status.contains('mes_gtrack')) {
-                            echo 'Stopping existing PM2 process: mes_gtrack'
-                            bat 'pm2 stop mes_gtrack || exit 0'
-                            bat 'pm2 delete mes_gtrack || exit 0'
+                        if (status.contains('inventory-system-backend')) {
+                            echo 'Stopping existing PM2 process: inventory-system-backend'
+                            bat 'pm2 stop inventory-system-backend || exit 0'
+                            bat 'pm2 delete inventory-system-backend || exit 0'
                         }
                     }
                 }
             }
         }
 
-        stage('🛠 Update Prisma Schema') {
+        stage('🛠 Generate Prisma Client') {
             steps {
                 dir('backend') {
-                    // ✅ Run your custom update:schema script here
-                    bat 'npm run update:schema'
+                    // ✅ Generate Prisma Client for MongoDB
+                    bat 'npx prisma generate'
+                }
+            }
+        }
+
+        stage('⚙️ Build Backend') {
+            steps {
+                dir('backend') {
+                    bat 'npm run build'
                 }
             }
         }
@@ -94,7 +86,7 @@ pipeline {
         stage('🚀 Start Backend') {
             steps {
                 dir('backend') {
-                    bat 'pm2 start server.js --name mes_gtrack'
+                    bat 'pm2 start dist/server.js --name inventory-system-backend'
                 }
             }
         }
