@@ -6,9 +6,9 @@ import api from '../services/api';
 
 import { Plus, X, MapPin, RefreshCw, ChevronLeft, ArrowLeft } from 'lucide-react';
 
-interface ScannedRow {
-  itemName: string;
+interface CountItem {
   barcode: string;
+  name: string;
   quantity: number;
 }
 
@@ -36,7 +36,7 @@ const OnlineInventory = () => {
   const [inventoryDate, setInventoryDate] = useState('');
   const [isInventoryActive, setIsInventoryActive] = useState(false);
   const [barcodeInput, setBarcodeInput] = useState('');
-  const [rows, setRows] = useState<ScannedRow[]>([]);
+  const [counts, setCounts] = useState<CountItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Missing State Variables
@@ -91,13 +91,13 @@ const OnlineInventory = () => {
     fetchMasterProducts();
 
     // Recover session
-    const savedRows = localStorage.getItem('online_inv_rows');
+    const savedCounts = localStorage.getItem('online_inv_counts');
     const savedName = localStorage.getItem('online_inv_name');
     const savedDate = localStorage.getItem('online_inv_date');
     const savedLoc = localStorage.getItem('online_inv_loc');
 
-    if (savedRows && savedName) {
-      setRows(JSON.parse(savedRows));
+    if (savedCounts && savedName) {
+      setCounts(JSON.parse(savedCounts));
       setInventoryName(savedName);
       setInventoryDate(savedDate || new Date().toLocaleDateString());
       if (savedLoc) setLocationId(savedLoc);
@@ -109,7 +109,7 @@ const OnlineInventory = () => {
   // Persistence Effect
   useEffect(() => {
     if (isInventoryActive) {
-      localStorage.setItem('online_inv_rows', JSON.stringify(rows));
+      localStorage.setItem('online_inv_counts', JSON.stringify(counts));
       localStorage.setItem('online_inv_name', inventoryName);
       localStorage.setItem('online_inv_date', inventoryDate);
       localStorage.setItem('online_inv_loc', locationId);
@@ -117,7 +117,7 @@ const OnlineInventory = () => {
       // Clear if not active (successfully submitted or cancelled)
       // Check if we just submitted/cancelled
     }
-  }, [rows, inventoryName, inventoryDate, locationId, isInventoryActive]);
+  }, [counts, inventoryName, inventoryDate, locationId, isInventoryActive]);
 
   useEffect(() => {
     if (locations.length > 0 && !locationId) setLocationId(locations[0].id);
@@ -160,37 +160,30 @@ const OnlineInventory = () => {
     }
   };
 
-  const addScannedItem = () => {
-    const barcode = barcodeInput.trim();
-    if (!barcode) return;
+  const handleAddItem = () => {
+    const code = barcodeInput.trim();
+    if (!code) return;
 
     // 1. Check if already in current list -> Increment
-    const existingIndex = rows.findIndex(r => r.barcode === barcode);
-    if (existingIndex >= 0) {
-      setRows(prev => {
-        const newRows = [...prev];
-        newRows[existingIndex] = {
-          ...newRows[existingIndex],
-          quantity: newRows[existingIndex].quantity + 1
-        };
-        return newRows;
-      });
+    const existingInCounts = counts.find(r => r.barcode === code);
+    if (existingInCounts) {
+      setCounts(prev => prev.map(item => item.barcode === code ? { ...item, quantity: item.quantity + 1 } : item));
       setBarcodeInput('');
       return;
     }
 
     // 2. Lookup in Master Data
-    const masterItem = masterProducts.find(p => p.sku === barcode || p.barcode === barcode);
+    const masterItem = masterProducts.find(p => p.sku === code || p.barcode === code);
 
     if (masterItem) {
-      setRows(prev => [
+      setCounts(prev => [
         ...prev,
-        { itemName: masterItem.name, barcode, quantity: 1 },
+        { name: masterItem.name, barcode: code, quantity: 1 },
       ]);
       setBarcodeInput('');
     } else {
       // 3. Not found -> Popup
-      setUnknownBarcode(barcode);
+      setUnknownBarcode(code);
       setShowUnknownPopup(true);
     }
   };
@@ -199,9 +192,9 @@ const OnlineInventory = () => {
     if (shouldAdd) {
       const name = prompt("Enter product name:", "New Item");
       if (name) {
-        setRows(prev => [
+        setCounts(prev => [
           ...prev,
-          { itemName: name, barcode: unknownBarcode, quantity: 1 }
+          { name: name, barcode: unknownBarcode, quantity: 1 }
         ]);
       }
     }
@@ -211,14 +204,14 @@ const OnlineInventory = () => {
   };
 
   const clearLocalSession = () => {
-    setRows([]);
+    setCounts([]);
     setInventoryName('');
     setIsInventoryActive(false);
     setLocationId('');
     setCountedBy('');
     setEmployeeId('');
 
-    localStorage.removeItem('online_inv_rows');
+    localStorage.removeItem('online_inv_counts');
     localStorage.removeItem('online_inv_name');
     localStorage.removeItem('online_inv_date');
     localStorage.removeItem('online_inv_loc');
@@ -226,7 +219,7 @@ const OnlineInventory = () => {
   };
 
   const submitInventory = async () => {
-    if (rows.length === 0) {
+    if (counts.length === 0) {
       alert('The inventory list is empty. Nothing to submit.');
       setShowSubmitPopup(false);
       return;
@@ -240,9 +233,9 @@ const OnlineInventory = () => {
     try {
       await api.post('/mobile/sync', {
         locationId,
-        items: rows.map((r) => ({
+        items: counts.map((r) => ({
           barcode: r.barcode,
-          name: r.itemName,
+          name: r.name,
           quantity: r.quantity,
         })),
         status: 'online',
@@ -264,7 +257,7 @@ const OnlineInventory = () => {
     }
   };
 
-  const uniqueItemCount = rows.length;
+  const uniqueItemCount = counts.length;
 
   const content = (
     <div className="flex flex-col h-full w-full max-w-[430px] sm:max-w-[400px] md:max-w-[430px] lg:max-w-[480px] mx-auto bg-white shadow-[0_10px_20px_-5px_rgba(9,30,66,0.25)] font-sans text-[#172B4D] overflow-hidden rounded-lg">
@@ -312,7 +305,7 @@ const OnlineInventory = () => {
                 type="text"
                 value={barcodeInput}
                 onChange={(e) => setBarcodeInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addScannedItem()}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
                 className="block w-full p-2.5 sm:p-3 text-sm sm:text-base text-[#172B4D] bg-white border-2 border-[#DFE1E6] rounded-md focus:border-[#0052CC] focus:outline-none focus:ring-2 sm:focus:ring-4 focus:ring-[#0052CC]/20 transition-all"
                 placeholder="Enter or scan barcode..."
                 autoFocus
@@ -320,7 +313,7 @@ const OnlineInventory = () => {
             </div>
             <button
               type="button"
-              onClick={addScannedItem}
+              onClick={handleAddItem}
               className="w-full bg-[#36B37E] text-white py-2.5 sm:py-3 px-4 sm:px-5 rounded-md font-semibold text-sm sm:text-base shadow-sm hover:bg-[#2F9F6D] active:translate-y-[1px] transition-all flex items-center justify-center gap-2"
             >
               <Plus size={18} className="shrink-0" />
@@ -348,17 +341,17 @@ const OnlineInventory = () => {
                   </tr>
                 </thead>
                 <tbody id="inventoryListBody" className="divide-y divide-[#DFE1E6]">
-                  {rows.map((row, idx) => (
+                  {counts.map((row, idx) => (
                     <tr
                       key={`${row.barcode}-${idx}`}
                       className="even:bg-[#FAFBFC] hover:bg-[#F0F3F8] transition-colors"
                     >
-                      <td className="p-2 sm:p-3.5 text-[#172B4D] text-sm sm:text-base min-w-0 max-w-[120px] sm:max-w-none truncate" title={row.itemName}>{row.itemName}</td>
+                      <td className="p-2 sm:p-3.5 text-[#172B4D] text-sm sm:text-base min-w-0 max-w-[120px] sm:max-w-none truncate" title={row.name}>{row.name}</td>
                       <td className="p-2 sm:p-3.5 text-[#172B4D] font-mono text-xs sm:text-sm min-w-0 max-w-[100px] sm:max-w-none truncate" title={row.barcode}>{row.barcode}</td>
                       <td className="p-2 sm:p-3.5 text-[#172B4D] font-bold text-sm sm:text-base">{row.quantity}</td>
                     </tr>
                   ))}
-                  {rows.length === 0 && (
+                  {counts.length === 0 && (
                     <tr>
                       <td colSpan={3} className="p-6 sm:p-8 text-center text-gray-400 text-sm sm:text-base">
                         No items scanned yet.
@@ -382,10 +375,10 @@ const OnlineInventory = () => {
           >
             <span className="truncate block">Qty Counts</span>
             <span
-              className={`absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 bg-[#DE350B] text-white rounded-full py-0.5 px-1.5 text-xs font-bold min-w-[22px] text-center ${scannedItemCount === 0 ? 'hidden' : ''
+              className={`absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 bg-[#DE350B] text-white rounded-full py-0.5 px-1.5 text-xs font-bold min-w-[22px] text-center ${counts.length === 0 ? 'hidden' : ''
                 }`}
             >
-              {rows.reduce((acc, r) => acc + r.quantity, 0)}
+              {counts.reduce((acc, r) => acc + r.quantity, 0)}
             </span>
           </button>
           <button
@@ -557,7 +550,7 @@ const OnlineInventory = () => {
                 <div className="p-4 bg-purple-50 rounded-lg text-center border border-purple-100">
                   <p className="text-xs uppercase font-bold text-purple-600 mb-1">Total Qty</p>
                   <p className="text-3xl font-bold text-purple-700">
-                    {rows.reduce((sum, item) => sum + item.quantity, 0)}
+                    {counts.reduce((sum, item) => sum + item.quantity, 0)}
                   </p>
                 </div>
               </div>
