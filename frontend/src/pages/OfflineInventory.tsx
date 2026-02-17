@@ -130,7 +130,7 @@ const OfflineInventory = () => {
                 setLocations(JSON.parse(cached));
             }
             // Fetch fresh
-            const response = await api.get('/api/mobile/locations'); // Adjusted path if needed, or use existing /mobile/locations if valid
+            const response = await api.get('/mobile/locations'); // Adjusted path if needed, or use existing /mobile/locations if valid
             setLocations(response.data);
             localStorage.setItem('cached_locations', JSON.stringify(response.data));
         } catch (err) {
