@@ -43,7 +43,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScanSuccess, onClose 
                 },
                 (errorMessage) => {
                     // Error callback (optional, happens on every frame that doesn't decode)
-                    // console.log(errorMessage); 
+                    console.error(errorMessage);
                 }
             );
         } catch (err) {
