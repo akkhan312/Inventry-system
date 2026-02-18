@@ -75,8 +75,10 @@ const Sidebar = () => {
                     </div>
                     <button
                         onClick={() => {
-                            logout();
-                            window.location.href = '/login';
+                            if (window.confirm('Are you sure you want to logout?')) {
+                                logout();
+                                window.location.href = '/login';
+                            }
                         }}
                         className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                         title="Logout"

@@ -80,8 +80,10 @@ const MobileSettings = () => {
     const t = translations[language];
 
     const handleLogout = () => {
-        sessionStorage.clear();
-        navigate('/mobile-login');
+        if (window.confirm(language === 'en' ? 'Are you sure you want to logout?' : 'هل أنت متأكد أنك تريد تسجيل الخروج؟')) {
+            sessionStorage.clear();
+            navigate('/mobile-login');
+        }
     };
 
     const handleUpdateProfile = async (e: React.FormEvent) => {
