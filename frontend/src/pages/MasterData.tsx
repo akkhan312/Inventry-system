@@ -168,13 +168,6 @@ const MasterData = () => {
                         </button>
                         <button
                             type="button"
-                            onClick={() => window.open(`${api.defaults.baseURL}/inventory/template`, "_blank")}
-                            className="inline-flex items-center gap-2 py-2.5 px-4 bg-gray-500 hover:bg-gray-600 text-white font-semibold text-sm rounded-lg shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
-                        >
-                            <Download size={16} /> Template
-                        </button>
-                        <button
-                            type="button"
                             onClick={handleImportClick}
                             disabled={isImporting}
                             className="inline-flex items-center gap-2 py-2.5 px-4 bg-[#F39C12] hover:bg-[#e67e22] text-white font-semibold text-sm rounded-lg shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all disabled:opacity-50"

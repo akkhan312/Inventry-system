@@ -462,36 +462,3 @@ export const deleteSubmission = async (req: Request, res: Response) => {
         res.status(500).json({ message: err.message || 'Server error' });
     }
 };
-
-export const getImportTemplate = async (req: Request, res: Response) => {
-    try {
-        const headers = [
-            'Item Code', 'Barcode / QR', 'Item Name', 'Category', 'Description',
-            'Opening Qty', 'Current Qty', 'Min Stock', 'Reorder Qty', 'Location',
-            'Sale Price', 'Unit Cost', 'UOM', 'Supplier', 'Batch No', 'Expiry Date',
-            'HSN Code', 'GST Rate'
-        ];
-
-        // Create a new workbook and worksheet
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.aoa_to_sheet([headers]);
-
-        // Access the first row cells to style them (optional, if we want to set column width)
-        // Set column widths
-        ws['!cols'] = headers.map(() => ({ wch: 15 }));
-
-        XLSX.utils.book_append_sheet(wb, ws, 'Product Import Template');
-
-        // Write to buffer
-        const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-
-        // Set headers for file download
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', 'attachment; filename=product_import_template.xlsx');
-
-        res.send(buffer);
-    } catch (error) {
-        console.error('Error generating template:', error);
-        res.status(500).json({ message: 'Failed to generate template' });
-    }
-};
