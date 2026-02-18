@@ -1,145 +1,176 @@
-import { Package, MapPin, WifiOff, List, Scan } from 'lucide-react';
-import MobileHeader from '../components/MobileHeader';
-import { useIsMobile } from '../hooks/useMediaQuery';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-interface MobileFeature {
-    id: string;
-    title: string;
-    description: string;
-    icon: React.ElementType;
-    route: string;
-    color: string;
-    gradient: string;
-    available: boolean;
-}
+import {
+    Box,
+    Bell,
+    Package,
+    AlertTriangle,
+    Warehouse,
+    ClipboardList,
+    MapPin,
+    ScanBarcode,
+    Globe,
+    CheckSquare,
+    X
+} from 'lucide-react';
+import { useDashboard } from '../context/DashboardContext';
+import api from '../services/api';
 
 const MobileUI = () => {
-    const isMobile = useIsMobile();
     const navigate = useNavigate();
+    const { stats, setDashboardData } = useDashboard();
+    const [showInventoryModal, setShowInventoryModal] = useState(false);
 
-    const features: MobileFeature[] = [
-        {
-            id: '1',
-            title: 'Inventory List',
-            description: 'View and sync detailed inventory records',
-            icon: List,
-            route: '/inventory-list',
-            color: 'text-blue-100',
-            gradient: 'from-blue-500 to-blue-700',
-            available: true
-        },
-        {
-            id: '2',
-            title: 'Locations',
-            description: 'Manage warehouse locations & stores',
-            icon: MapPin,
-            route: '/locations',
-            color: 'text-emerald-100',
-            gradient: 'from-emerald-500 to-emerald-700',
-            available: true
-        },
-        {
-            id: '3',
-            title: 'Offline Mode',
-            description: 'Count stock without internet connection',
-            icon: WifiOff,
-            route: '/offline-inventory',
-            color: 'text-purple-100',
-            gradient: 'from-purple-500 to-purple-700',
-            available: true
-        },
-        {
-            id: '4',
-            title: 'Online Inventory',
-            description: 'Real-time cloud inventory management',
-            icon: Package,
-            route: '/online-inventory',
-            color: 'text-orange-100',
-            gradient: 'from-orange-500 to-orange-700',
-            available: true
-        },
-        {
-            id: '5',
-            title: 'Barcode Mapping',
-            description: 'Link products to barcodes quickly',
-            icon: Scan,
-            route: '/barcode-mapping-mobile',
-            color: 'text-indigo-100',
-            gradient: 'from-indigo-500 to-indigo-700',
-            available: true
-        }
-    ];
+    // Fetch dashboard data if not available
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                // If stats are empty, fetch them
+                if (!stats) {
+                    const response = await api.get('/inventory/dashboard');
+                    setDashboardData(
+                        response.data.stats,
+                        response.data.recentProducts,
+                        response.data.stockTrendData,
+                        response.data.categoryDistribution
+                    );
+                }
+            } catch (err) {
+                console.error("Error fetching dashboard data:", err);
+            }
+        };
 
-    const handleFeatureClick = (feature: MobileFeature) => {
-        if (feature.available) {
-            navigate(feature.route);
-        }
+        fetchData();
+    }, [stats, setDashboardData]);
+
+    const handleInventoryClick = () => {
+        setShowInventoryModal(true);
     };
 
     return (
-        <div className={`min-h-screen bg-neutral-900 text-white ${isMobile ? 'pb-24' : ''}`}>
-            {isMobile && <MobileHeader title="Mobile Dashboard" showBack={false} />}
-
-            <div className={`max-w-2xl mx-auto ${isMobile ? 'px-4 pt-6' : 'p-8'}`}>
-                {/* Welcome Section */}
-                <div className="mb-8 animate-in fade-in slide-in-from-top duration-500">
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-                        Welcome,
-                    </h1>
-                    <p className="text-slate-400 text-sm mt-1">Select a tool to get started</p>
+        <div className="min-h-screen bg-[#F2F2F7] font-sans text-[#1C1C1E] pb-24 relative overflow-hidden">
+            {/* App Bar Header */}
+            <header className="bg-white px-4 py-3 flex justify-between items-center shadow-sm sticky top-0 z-10">
+                <div className="flex items-center gap-2.5">
+                    <div className="w-[30px] h-[30px] bg-[#007AFF] rounded-lg flex items-center justify-center text-white">
+                        <Box size={16} />
+                    </div>
+                    <span className="text-[1.1rem] font-semibold text-[#1C1C1E]">GST Inventory</span>
                 </div>
+                <button className="text-[#007AFF] cursor-pointer active:opacity-70">
+                    <Bell size={22} />
+                </button>
+            </header>
 
-                {/* Features Grid */}
-                <div className="grid grid-cols-1 gap-4">
-                    {features.map((feature, index) => (
-                        <div
-                            key={feature.id}
-                            onClick={() => handleFeatureClick(feature)}
-                            className={`
-                                relative p-5 rounded-2xl cursor-pointer overflow-hidden group
-                                bg-neutral-800/50 backdrop-blur-md border border-white/5
-                                hover:border-white/10 transition-all duration-300 active:scale-[0.98]
-                            `}
-                            style={{ animationDelay: `${index * 100}ms` }}
-                        >
-                            {/* Hover Gradient Overlay */}
-                            <div className={`absolute inset-0 bg-gradient-to-r ${feature.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
-
-                            <div className="flex items-center gap-5 relative z-10">
-                                {/* Icon Box */}
-                                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center shadow-lg`}>
-                                    <feature.icon size={26} className="text-white" />
-                                </div>
-
-                                {/* Text Content */}
-                                <div className="flex-1">
-                                    <div className="flex justify-between items-center mb-1">
-                                        <h3 className="font-bold text-lg text-white group-hover:text-blue-200 transition-colors">
-                                            {feature.title}
-                                        </h3>
-                                        {!feature.available && (
-                                            <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-500 text-[10px] font-bold uppercase rounded-full">
-                                                Soon
-                                            </span>
-                                        )}
-                                    </div>
-                                    <p className="text-slate-400 text-sm leading-tight group-hover:text-slate-300 transition-colors">
-                                        {feature.description}
-                                    </p>
-                                </div>
-
-                                {/* Arrow */}
-                                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-500 group-hover:bg-white/10 group-hover:text-white transition-all">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </div>
-                            </div>
+            <main className="p-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {/* KPI Section */}
+                <section className="grid grid-cols-2 gap-4 mb-6">
+                    {/* Total Products Widget */}
+                    <div className="bg-white rounded-2xl p-4 flex items-center gap-3 shadow-[0_4px_12px_rgba(0,0,0,0.06)] border border-black/5">
+                        <div className="w-11 h-11 rounded-xl bg-[#007AFF] flex items-center justify-center text-white shadow-sm flex-shrink-0">
+                            <Package size={20} />
                         </div>
-                    ))}
+                        <div>
+                            <div className="text-[1.3rem] font-bold leading-none">{stats?.totalProducts?.toLocaleString() || "0"}</div>
+                            <div className="text-[0.8rem] text-[#8E8E93] mt-0.5 font-medium">Total Products</div>
+                        </div>
+                    </div>
+
+                    {/* Low Stock Widget */}
+                    <div className="bg-white rounded-2xl p-4 flex items-center gap-3 shadow-[0_4px_12px_rgba(0,0,0,0.06)] border border-black/5">
+                        <div className="w-11 h-11 rounded-xl bg-[#FF9500] flex items-center justify-center text-white shadow-sm flex-shrink-0">
+                            <AlertTriangle size={20} />
+                        </div>
+                        <div>
+                            <div className="text-[1.3rem] font-bold leading-none">{stats?.lowStockItems?.toString() || "0"}</div>
+                            <div className="text-[0.8rem] text-[#8E8E93] mt-0.5 font-medium">Low Stock</div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Navigation Grid */}
+                <section className="grid grid-cols-2 gap-4">
+                    {/* Inventory Button */}
+                    <button
+                        onClick={handleInventoryClick}
+                        className="bg-[#5856D6] border-none rounded-[18px] py-8 px-4 flex flex-col items-center justify-center gap-3 shadow-[0_6px_16px_rgba(0,0,0,0.1)] active:scale-[0.96] transition-transform duration-100"
+                    >
+                        <Warehouse size={40} className="text-white" />
+                        <span className="text-white font-semibold text-[0.95rem]">Inventory</span>
+                    </button>
+
+                    {/* List of Stocks Button */}
+                    <button
+                        onClick={() => navigate('/inventory-list')}
+                        className="bg-[#FF3B30] border-none rounded-[18px] py-8 px-4 flex flex-col items-center justify-center gap-3 shadow-[0_6px_16px_rgba(0,0,0,0.1)] active:scale-[0.96] transition-transform duration-100"
+                    >
+                        <ClipboardList size={40} className="text-white" />
+                        <span className="text-white font-semibold text-[0.95rem]">List of Stocks</span>
+                    </button>
+
+                    {/* Locations Button */}
+                    <button
+                        onClick={() => navigate('/locations')}
+                        className="bg-[#34C759] border-none rounded-[18px] py-8 px-4 flex flex-col items-center justify-center gap-3 shadow-[0_6px_16px_rgba(0,0,0,0.1)] active:scale-[0.96] transition-transform duration-100"
+                    >
+                        <MapPin size={40} className="text-white" />
+                        <span className="text-white font-semibold text-[0.95rem]">Locations</span>
+                    </button>
+
+                    {/* Barcode Mapping Button */}
+                    <button
+                        onClick={() => navigate('/barcode-mapping-mobile')}
+                        className="bg-[#FF9500] border-none rounded-[18px] py-8 px-4 flex flex-col items-center justify-center gap-3 shadow-[0_6px_16px_rgba(0,0,0,0.1)] active:scale-[0.96] transition-transform duration-100"
+                    >
+                        <ScanBarcode size={40} className="text-white" />
+                        <span className="text-white font-semibold text-[0.95rem]">Barcode Mapping</span>
+                    </button>
+                </section>
+            </main>
+
+            {/* Inventory Modal Overlay */}
+            {showInventoryModal && (
+                <div
+                    className="fixed inset-0 bg-black/40 z-[1000] flex items-end justify-center animate-in fade-in duration-200"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) setShowInventoryModal(false);
+                    }}
+                >
+                    <div className="bg-white rounded-t-[20px] w-full max-w-md mx-auto shadow-[0_-10px_25px_rgba(0,0,0,0.1)] animate-in slide-in-from-bottom duration-300 overflow-hidden pb-8">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                            <h3 className="text-[1.2rem] font-semibold text-[#1C1C1E]">Choose Inventory Type</h3>
+                            <button
+                                onClick={() => setShowInventoryModal(false)}
+                                className="text-[#8E8E93] hover:text-gray-600 p-1"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <button
+                                onClick={() => navigate('/online-inventory')}
+                                className="w-full p-4 rounded-[14px] bg-[#007AFF] text-white flex items-center gap-4 text-[1rem] font-semibold shadow-md active:scale-[0.98] transition-all"
+                            >
+                                <Globe size={24} />
+                                Online Inventory
+                            </button>
+                            <button
+                                onClick={() => navigate('/offline-inventory')}
+                                className="w-full p-4 rounded-[14px] bg-[#34C759] text-white flex items-center gap-4 text-[1rem] font-semibold shadow-md active:scale-[0.98] transition-all"
+                            >
+                                <CheckSquare size={24} />
+                                Offline Physical Count
+                            </button>
+                            <button
+                                onClick={() => setShowInventoryModal(false)}
+                                className="w-full p-4 rounded-[14px] bg-[#F2F2F7] text-[#007AFF] text-[1rem] font-semibold active:bg-gray-200 transition-colors mt-2"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
