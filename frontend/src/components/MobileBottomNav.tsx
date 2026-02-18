@@ -1,4 +1,4 @@
-import { User, Settings } from 'lucide-react';
+import { User, Settings, LayoutDashboard } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useIsMobile } from '../hooks/useMediaQuery';
 
@@ -24,6 +24,17 @@ const MobileBottomNav = () => {
                 >
                     <Settings size={24} className="mb-0.5" />
                     <span className="text-xs font-medium">Settings</span>
+                </button>
+
+                <button
+                    onClick={() => navigate('/mobile-ui')}
+                    className={`flex flex-col items-center justify-center px-3 py-1 rounded-xl min-w-[60px] transition-colors ${isActive('/mobile-ui')
+                        ? 'text-blue-600 bg-blue-50'
+                        : 'text-gray-500'
+                        }`}
+                >
+                    <LayoutDashboard size={24} className="mb-0.5" />
+                    <span className="text-xs font-medium">Home</span>
                 </button>
 
                 <button
