@@ -55,6 +55,7 @@ interface DashboardContextType {
     language: 'en' | 'ar';
     dir: 'ltr' | 'rtl';
     toggleLanguage: () => void;
+    logout: () => void;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -85,6 +86,12 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
         localStorage.setItem('language', newLang);
         document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
         document.documentElement.lang = newLang;
+    };
+
+    const logout = () => {
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
+        setCurrentUser(null);
     };
 
     // Initialize HTML attributes on mount
@@ -126,7 +133,8 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
             updateCurrentUser,
             language,
             dir,
-            toggleLanguage
+            toggleLanguage,
+            logout
         }}>
             {children}
         </DashboardContext.Provider>
