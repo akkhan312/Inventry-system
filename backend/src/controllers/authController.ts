@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import prisma from '../lib/prisma.js';
-import { sendLoginNotification, sendPasswordResetEmail } from '../services/emailService.js';
+import { sendPasswordResetEmail } from '../services/emailService.js';
 import { createNotification } from './notificationController.js';
 
 import fs from 'fs';
@@ -51,11 +51,7 @@ export const login = async (req: Request, res: Response) => {
             { expiresIn: '1d' }
         );
 
-        // Send login notification email (async, don't wait for it)
-        const ipAddress = req.ip || (req.socket as any).remoteAddress || 'Unknown';
-        sendLoginNotification(user.email, user.name || user.username, ipAddress).catch(err => {
-            console.error('Failed to send login notification:', err);
-        });
+
 
         // Add persistent notification
         createNotification(

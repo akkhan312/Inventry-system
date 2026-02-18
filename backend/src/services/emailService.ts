@@ -21,68 +21,7 @@ const isEmailConfigured = () => {
         process.env.SMTP_PASS !== 'your-app-password';
 };
 
-// Send login notification email
-export const sendLoginNotification = async (userEmail: string, userName: string, ipAddress: string) => {
-    if (!isEmailConfigured()) {
-        console.warn('⚠️ SMTP not configured. Skipping login notification for:', userEmail);
-        return;
-    }
 
-    const mailOptions = {
-        from: process.env.FROM_EMAIL || 'GST System <noreply@gstsystem.com>',
-        to: userEmail,
-        subject: '🔐 New Login to Your GST Account',
-        html: `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                    .header { background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-                    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
-                    .info-box { background: white; padding: 15px; margin: 15px 0; border-left: 4px solid #3B82F6; border-radius: 5px; }
-                    .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px; }
-                    .button { display: inline-block; padding: 12px 24px; background: #3B82F6; color: white; text-decoration: none; border-radius: 5px; margin: 15px 0; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>🔐 Login Alert</h1>
-                        <p>New sign-in to your account</p>
-                    </div>
-                    <div class="content">
-                        <p>Hello <strong>${userName}</strong>,</p>
-                        <p>We detected a new sign-in to your GST Inventory System account.</p>
-                        
-                        <div class="info-box">
-                            <p><strong>📅 Time:</strong> ${new Date().toLocaleString()}</p>
-                            <p><strong>📧 Email:</strong> ${userEmail}</p>
-                        </div>
-                        
-                        <p>If this was you, you can safely ignore this email.</p>
-                        <p>If this wasn't you, please secure your account immediately by changing your password.</p>
-                        
-                        <p style="margin-top: 30px;">Thank you,<br/><strong>GST System Team</strong></p>
-                    </div>
-                    <div class="footer">
-                        <p>© 2024 GST Inventory Management System. All rights reserved.</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-        `
-    };
-
-    try {
-        await transporter.sendMail(mailOptions);
-        console.log('Login notification email sent to:', userEmail);
-    } catch (error) {
-        console.error('Error sending login notification:', error);
-        throw error;
-    }
-};
 
 // Send password reset email
 export const sendPasswordResetEmail = async (userEmail: string, resetToken: string) => {
