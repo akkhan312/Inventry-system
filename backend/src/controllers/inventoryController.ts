@@ -282,27 +282,50 @@ export const importProducts = async (req: Request, res: Response) => {
         let skipCount = 0;
         const errors: string[] = [];
 
+        // Helper to get value from row with multiple possible keys (case-insensitive)
+        const getValue = (row: any, candidates: string[]): any => {
+            const rowKeys = Object.keys(row);
+            for (const candidate of candidates) {
+                // Exact match
+                if (row[candidate] !== undefined) return row[candidate];
+
+                // Case-insensitive match
+                const foundKey = rowKeys.find(k => k.toLowerCase().trim() === candidate.toLowerCase().trim());
+                if (foundKey && row[foundKey] !== undefined) return row[foundKey];
+            }
+            return undefined;
+        };
+
         for (const row of rows) {
-            // Map Excel headers to expected keys
-            const name = row.Name || row['Item Name'];
-            const sku = row.SKU || row['Item Code'];
-            const category = row.Category; // Category usually matches
-            const quantity = row.Quantity || row['Current Qty'];
-            const purchasePrice = row.PurchasePrice || row['Unit Cost'];
-            const salePrice = row.SalePrice || row['Sale Price'];
-            const unit = row.Unit || row['UOM'];
-            const hsn = row.HSN || row['HSN Code'];
-            const gstRate = row.GSTRate || row['GST Rate (%)'] || row['GST Rate'];
-            const openingStock = row.OpeningQty || row['Opening Qty'];
-            const minStock = row.MinStock || row['Min Stock'];
-            const reorderPoint = row.ReorderQty || row['Reorder Qty'];
-            const location = row.Location;
-            const supplier = row.Supplier;
-            const batchNumber = row.BatchNumber || row['Serial / Batch'];
-            const expiryDate = row.ExpiryDate || row['Expiry Date'];
+            // Map Excel headers to expected keys using flexible matching
+            const name = getValue(row, ['Name', 'Item Name', 'Product Name', 'Title']);
+            const sku = getValue(row, ['SKU', 'Item Code', 'Product Code', 'Code']);
+            const category = getValue(row, ['Category', 'Item Category', 'Product Category', 'Group']);
+            const quantity = getValue(row, ['Quantity', 'Current Qty', 'Qty', 'Stock']);
+            const purchasePrice = getValue(row, ['PurchasePrice', 'Unit Cost', 'Purchase Price', 'Cost Price', 'Cost']);
+            const salePrice = getValue(row, ['SalePrice', 'Sale Price', 'Selling Price', 'Price']);
+            const unit = getValue(row, ['Unit', 'UOM', 'Unit of Measure']);
+            const hsn = getValue(row, ['HSN', 'HSN Code']);
+            const gstRate = getValue(row, ['GSTRate', 'GST Rate (%)', 'GST Rate', 'Tax Rate']);
+            const openingStock = getValue(row, ['OpeningQty', 'Opening Qty', 'Opening Stock']);
+            const minStock = getValue(row, ['MinStock', 'Min Stock', 'Minimum Stock']);
+            const reorderPoint = getValue(row, ['ReorderQty', 'Reorder Qty', 'Reorder Point']);
+            const location = getValue(row, ['Location', 'Warehouse', 'Bin']);
+            const supplier = getValue(row, ['Supplier', 'Vendor']);
+            const batchNumber = getValue(row, ['BatchNumber', 'Serial / Batch', 'Batch No', 'Batch']);
+            const expiryDate = getValue(row, ['ExpiryDate', 'Expiry Date', 'Expires']);
+
+            const description = getValue(row, ['Description', 'Desc', 'Details']);
+            const barcode = getValue(row, ['Barcode', 'Barcode / QR', 'QR Code']);
 
             if (!name || !sku || !category) {
-                errors.push(`Row missing required fields (Name, SKU, Category): ${JSON.stringify(row)}`);
+                // Determine what's missing for better error message
+                const missing = [];
+                if (!name) missing.push('Name');
+                if (!sku) missing.push('SKU');
+                if (!category) missing.push('Category');
+
+                errors.push(`Row missing required fields (${missing.join(', ')}): ${JSON.stringify(row)}`);
                 skipCount++;
                 continue;
             }
@@ -321,24 +344,24 @@ export const importProducts = async (req: Request, res: Response) => {
 
                 await (prisma.product as any).create({
                     data: {
-                        name: name,
-                        sku: sku.toString(),
-                        category: category,
+                        name: String(name),
+                        sku: String(sku),
+                        category: String(category),
                         quantity: Number(quantity) || 0,
                         purchasePrice: Number(purchasePrice) || 0,
                         salePrice: Number(salePrice) || 0,
-                        description: row.Description || undefined,
-                        barcode: row.Barcode || row['Barcode / QR'] ? (row.Barcode || row['Barcode / QR']).toString() : undefined,
-                        unit: unit || 'pcs',
-                        hsnCode: hsn ? hsn.toString() : undefined,
+                        description: description ? String(description) : undefined,
+                        barcode: barcode ? String(barcode) : undefined,
+                        unit: unit ? String(unit) : 'pcs',
+                        hsnCode: hsn ? String(hsn) : undefined,
                         gstRate: Number(gstRate) || 18,
                         status: (Number(quantity) || 0) <= 0 ? 'out' : ((Number(quantity) || 0) <= 10 ? 'low' : 'in'),
                         openingStock: Number(openingStock) || 0,
                         minStock: Number(minStock) || 10,
                         reorderPoint: Number(reorderPoint) || 15,
-                        location: location || "Main Warehouse",
-                        supplier: supplier || undefined,
-                        batchNumber: batchNumber || undefined,
+                        location: location ? String(location) : "Main Warehouse",
+                        supplier: supplier ? String(supplier) : undefined,
+                        batchNumber: batchNumber ? String(batchNumber) : undefined,
                         expiryDate: expiryDate ? new Date(expiryDate) : undefined
                     }
                 });
