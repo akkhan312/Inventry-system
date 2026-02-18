@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import prisma from '../lib/prisma.js';
-import { sendPasswordResetEmail } from '../services/emailService.js';
+
 import { createNotification } from './notificationController.js';
 
 import fs from 'fs';
@@ -149,7 +149,8 @@ export const forgotPassword = async (req: Request, res: Response) => {
         });
 
         // Send email
-        await sendPasswordResetEmail(user.email, resetToken);
+        // await sendPasswordResetEmail(user.email, resetToken);
+        console.log(`[Email Disabled] Password reset requested for ${user.email}. Token: ${resetToken}`);
 
         res.json({ message: successMessage });
     } catch (err) {

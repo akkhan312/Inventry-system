@@ -13,7 +13,7 @@ import prisma from './lib/prisma.js';
 import mobileRoutes from './routes/mobile.js';
 import locationRoutes from './routes/locations.js';
 import barcodeRoutes from './routes/barcode.js';
-import { verifyEmailConfig } from './services/emailService.js';
+
 import { errorHandler } from './middleware/errorMiddleware.js';
 
 dotenv.config();
@@ -86,10 +86,9 @@ const server = app.listen(Number(PORT), '0.0.0.0', () => {
         .catch((err: any) => {
             console.error('Database connection error:', err);
         });
-
-    // Check email configuration
-    verifyEmailConfig();
 });
+
+
 
 // Keep process alive
 process.on('SIGINT', () => {

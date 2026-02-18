@@ -12,9 +12,7 @@ const timeout = setTimeout(() => {
         await import('./lib/prisma.js');
         console.log('Prisma loaded');
 
-        console.log('Importing emailService...');
-        await import('./services/emailService.js');
-        console.log('EmailService loaded');
+
 
         console.log('Importing notificationController...');
         await import('./controllers/notificationController.js');
