@@ -4,9 +4,15 @@ import { useDashboard } from '../context/DashboardContext';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+import { useIsMobile } from '../hooks/useMediaQuery';
+
 const Sidebar = () => {
     const { currentUser: user, logout } = useDashboard();
     const location = useLocation();
+    const isMobile = useIsMobile();
+
+    // Always hide sidebar on mobile devices
+    if (isMobile) return null;
 
     // Hide sidebar on Mobile UI page and all mobile feature pages (for non-admin users)
     const mobileRoutes = [
