@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, RefreshCw, Download, Upload, Trash2 } from "lucide-react";
+import { Search, RefreshCw, Download, Upload, Trash2, FileText } from "lucide-react";
 import api from "../services/api";
 
 interface Product {
@@ -165,6 +165,28 @@ const MasterData = () => {
                             className="inline-flex items-center gap-2 py-2.5 px-4 bg-[#2ECC71] hover:bg-[#27ae60] text-white font-semibold text-sm rounded-lg shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
                         >
                             <Download size={16} /> Export
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const headers = [
+                                    "SKU", "Item Name", "Category", "Description", "Barcode / QR",
+                                    "Unit", "Current Qty", "Purchase Price", "Sale Price",
+                                    "HSN Code", "GST Rate (%)", "Opening Qty", "Min Stock",
+                                    "Reorder Qty", "Location", "Supplier", "Serial / Batch", "Expiry Date"
+                                ];
+                                const csvContent = "data:text/csv;charset=utf-8," + headers.join(",");
+                                const encodedUri = encodeURI(csvContent);
+                                const link = document.createElement("a");
+                                link.setAttribute("href", encodedUri);
+                                link.setAttribute("download", "inventory_template.csv");
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            }}
+                            className="inline-flex items-center gap-2 py-2.5 px-4 bg-[#95A5A6] hover:bg-[#7F8C8D] text-white font-semibold text-sm rounded-lg shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
+                        >
+                            <FileText size={16} /> Template
                         </button>
                         <button
                             type="button"
