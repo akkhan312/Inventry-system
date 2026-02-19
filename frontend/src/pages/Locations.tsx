@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Plus, Trash2, Edit2, X, Loader2, MapPin as LocationOn, User, Info } from 'lucide-react';
+import { MapPin, Plus, Trash2, Edit2, X, Loader2, MapPin as LocationOn, User } from 'lucide-react';
 import MobileHeader from '../components/MobileHeader';
 import { useIsMobile } from '../hooks/useMediaQuery';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -142,12 +142,12 @@ const Locations = () => {
 
     // ----- Mobile UI (match locationsmobile.html) -----
     const mobileContent = (
-        <div className="relative flex flex-col h-full max-w-[430px] mx-auto bg-white shadow-lg overflow-hidden rounded-b-2xl">
+        <div className="relative flex flex-col h-full w-full max-w-5xl mx-auto bg-white shadow-lg overflow-hidden rounded-b-2xl">
             <header className="bg-[#5c6bc0] text-white py-6 px-6 flex items-center gap-4 shadow-md shrink-0">
                 <LocationOn size={28} className="shrink-0" />
                 <h1 className="text-2xl font-medium">Locations</h1>
             </header>
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-20 text-gray-500">
                         <Loader2 size={32} className="animate-spin mb-2" />
@@ -160,37 +160,37 @@ const Locations = () => {
                         <p className="text-gray-400">Add your first location using the button below.</p>
                     </div>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-20">
                         {locations.map(loc => (
                             <div
                                 key={loc.id}
-                                className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 relative"
+                                className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 relative hover:shadow-md transition-shadow cursor-default"
                             >
                                 <div className="flex justify-between items-center mb-3">
-                                    <span className="text-sm text-gray-500">ID: {displayId(loc.id)}</span>
+                                    <span className="text-sm text-gray-500 font-mono">ID: {displayId(loc.id)}</span>
                                     <button
                                         type="button"
                                         onClick={() => handleEdit(loc)}
-                                        className="p-1.5 text-[#5c6bc0] hover:bg-[#5c6bc0]/10 rounded-lg transition-colors"
+                                        className="p-2 text-[#5c6bc0] hover:bg-[#5c6bc0]/10 rounded-full transition-colors cursor-pointer active:scale-95"
                                         aria-label="Edit"
+                                        title="Edit Location"
                                     >
                                         <Edit2 size={20} />
                                     </button>
                                 </div>
-                                <h3 className="text-xl font-medium text-gray-900 mb-3">{loc.name}</h3>
-                                <div className="flex flex-col gap-2">
-                                    <div className="flex items-start gap-2 text-base text-gray-700">
-                                        <MapPin size={18} className="text-gray-500 shrink-0 mt-0.5" />
-                                        <span>{loc.address}</span>
+                                <h3 className="text-lg font-bold text-gray-900 mb-3 truncate" title={loc.name}>{loc.name}</h3>
+                                <div className="flex flex-col gap-2.5">
+                                    <div className="flex items-start gap-2.5 text-sm text-gray-700">
+                                        <MapPin size={16} className="text-gray-400 shrink-0 mt-0.5" />
+                                        <span className="leading-snug line-clamp-2" title={loc.address}>{loc.address}</span>
                                     </div>
-                                    <div className="flex items-center gap-2 text-base text-gray-700">
-                                        <User size={18} className="text-gray-500 shrink-0" />
-                                        <span>{loc.manager || '—'}</span>
+                                    <div className="flex items-center gap-2.5 text-sm text-gray-700">
+                                        <User size={16} className="text-gray-400 shrink-0" />
+                                        <span className="truncate" title={loc.manager || ''}>{loc.manager || '—'}</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <Info size={18} className="text-gray-500 shrink-0" />
+                                    <div className="flex items-center gap-2 mt-1">
                                         <span
-                                            className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusClass(loc.status || 'active')}`}
+                                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusClass(loc.status || 'active')}`}
                                         >
                                             {getStatusLabel(loc.status || 'active')}
                                         </span>
@@ -204,8 +204,9 @@ const Locations = () => {
             <button
                 type="button"
                 onClick={handleOpenAdd}
-                className="absolute bottom-6 right-6 w-14 h-14 rounded-full bg-[#5c6bc0] text-white shadow-lg flex items-center justify-center hover:scale-105 hover:shadow-xl transition-all z-10"
+                className="absolute bottom-6 right-6 w-14 h-14 rounded-full bg-[#5c6bc0] text-white shadow-lg flex items-center justify-center hover:scale-105 hover:shadow-xl active:scale-95 transition-all z-20 cursor-pointer"
                 aria-label="Add location"
+                title="Add New Location"
             >
                 <Plus size={28} />
             </button>

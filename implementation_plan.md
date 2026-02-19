@@ -1,41 +1,23 @@
-# Implementation Plan - Force Mobile Layout for Locations when accessed from Mobile UI
+# Implementation Plan - Enhance Responsiveness and Cursor Feedback for Locations Mobile UI
 
 ## Objective
-Ensure that when a user navigates to "Locations" from the "Mobile UI" dashboard, they see the mobile-optimized layout (no sidebar, no desktop header, mobile content style) regardless of the device screen size (e.g., testing on desktop). Meanwhile, the Admin Dashboard access to "Locations" must remain the standard desktop view with sidebar.
-
-## Strategy
-Use a URL query parameter `?mobile=true` to explicitly signal the intent to view the mobile version of the page. This bypasses screen-size-only detection.
+Adjust the "Mobile UI" layout of the Locations page to be responsive on all devices (especially when accessed via `?mobile=true` on desktop), and ensure appropriate cursor feedback (pointer) on interactive elements.
 
 ## Changes
-1.  **`frontend/src/pages/MobileUI.tsx`**:
-    *   Update the "Locations" button `onClick` handler to navigate to `/locations?mobile=true`.
-
-2.  **`frontend/src/layouts/DashboardLayout.tsx`**:
-    *   Update logic to treat the current route as a "Mobile UI" route if the `mobile=true` query parameter is present.
-    *   This will trigger the existing logic to hide the `Sidebar` and main `Header`.
-
-3.  **`frontend/src/pages/Locations.tsx`**:
-    *   Import `useLocation` from `react-router-dom`.
-    *   Initialize `useLocation`.
-    *   Update the `isMobile` check to returns `true` if `useIsMobile()` is true OR if the `mobile=true` query parameter is present.
-    *   This ensures the render function displays the `mobileContent` (cards view) instead of the `desktopContent` (table view).
+1.  **Frontend (`Locations.tsx`)**:
+    *   **Responsiveness**: Adjust the `mobileContent` container. Change `max-w-[430px]` to a meaningful maximum (e.g., `w-full max-w-3xl`) and ensure appropriate padding/margins. This allows the content to expand comfortably on tablets or desktops while maintaining the mobile "card" look.
+    *   **Grid Layout**: For wider screens (md/lg breakpoints in the mobile view), switch the list of locations from a single column to a grid (e.g., `grid-cols-1 md:grid-cols-2`) so the space is utilized effectively.
+    *   **Interactive Elements**: Explicitly add `cursor-pointer` to:
+        *   Edit button (`<button>`)
+        *   Floating Action Button (Add Location)
+        *   Back button (in `MobileHeader` - handled internally, but verify if needed).
+        *   Delete button in the modal.
 
 ## Verification
-*   **Scenario A: Admin Dashboard (Desktop)**
-    *   Go to `/dashboard`.
-    *   Click "Locations" in Sidebar.
-    *   URL is `/locations`.
-    *   Result: Sidebar Visible, Header Visible, Table View. (Correct)
-    *   Resize window to mobile size -> Result: Sidebar Hidden, Mobile View. (Correct)
-
-*   **Scenario B: Mobile UI (Desktop/Testing)**
-    *   Go to `/mobile-ui`.
-    *   Click "Locations" button.
-    *   URL is `/locations?mobile=true`.
-    *   Result: Sidebar Hidden, Header Hidden, Mobile View (Cards). (Correct)
-
-*   **Scenario C: Mobile Device**
-    *   Go to `/mobile-ui` (or start there).
-    *   Click "Locations".
-    *   URL is `/locations?mobile=true`.
-    *   Result: Sidebar Hidden, Header Hidden, Mobile View. (Correct)
+*   **Responsiveness**:
+    *   Open `/locations?mobile=true` on a large desktop screen.
+    *   Verify the content is not constricted to a tiny 430px column but uses the available width sensibly (e.g., max-width 3xl).
+    *   Verify the cards are laid out in a grid if space allows.
+*   **Cursors**:
+    *   Hover over the Edit button, Add (+) button, and Delete button.
+    *   Verify the cursor changes to a pointer.
