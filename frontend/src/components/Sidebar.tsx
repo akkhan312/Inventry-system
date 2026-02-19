@@ -1,4 +1,4 @@
-import { Home, Database, Clock, ScanBarcode, Settings, Package, LogOut } from 'lucide-react';
+import { Home, Database, Clock, ScanBarcode, Settings, Package, LogOut, MapPin } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useDashboard } from '../context/DashboardContext';
 import { clsx } from 'clsx';
@@ -12,7 +12,6 @@ const Sidebar = () => {
     const mobileRoutes = [
         '/mobile-ui',
         '/inventory-list',
-        '/locations',
         '/offline-inventory',
         '/online-inventory',
         '/barcode-mapping-mobile'
@@ -27,6 +26,7 @@ const Sidebar = () => {
         { icon: Database, label: 'Master Data', path: '/master-data' },
         { icon: Clock, label: 'Recent Inventory', path: '/recent-inventory' },
         { icon: ScanBarcode, label: 'Barcode Mapping', path: '/barcode-mapping' },
+        { icon: MapPin, label: 'Locations', path: '/locations' },
         { icon: Settings, label: 'Settings', path: '/settings' },
     ];
 
