@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MapPin, Plus, Trash2, Edit2, X, Loader2, MapPin as LocationOn, User, Info } from 'lucide-react';
 import MobileHeader from '../components/MobileHeader';
 import { useIsMobile } from '../hooks/useMediaQuery';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 
 interface Location {
@@ -35,7 +35,9 @@ const Locations = () => {
         manager: '',
         status: 'active'
     });
-    const isMobile = useIsMobile();
+    const location = useLocation();
+    const isMobileQuery = new URLSearchParams(location.search).get('mobile') === 'true';
+    const isMobile = useIsMobile() || isMobileQuery;
     const navigate = useNavigate();
 
     useEffect(() => {

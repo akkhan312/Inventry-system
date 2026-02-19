@@ -17,7 +17,7 @@ const DashboardLayout = () => {
         '/barcode-mapping-mobile'
     ];
 
-    const isMobileUI = mobileRoutes.includes(location.pathname);
+    const isMobileUI = mobileRoutes.includes(location.pathname) || new URLSearchParams(location.search).get('mobile') === 'true';
 
     return (
         <div className="min-h-screen bg-gray-50 flex">

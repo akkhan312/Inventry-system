@@ -110,7 +110,7 @@ const MobileUI = () => {
 
                     {/* Locations Button */}
                     <button
-                        onClick={() => navigate('/locations')}
+                        onClick={() => navigate('/locations?mobile=true')}
                         className="bg-[#34C759] border-none rounded-[18px] py-8 px-4 flex flex-col items-center justify-center gap-3 shadow-[0_6px_16px_rgba(0,0,0,0.1)] active:scale-[0.96] transition-transform duration-100"
                     >
                         <MapPin size={40} className="text-white" />
