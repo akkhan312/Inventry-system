@@ -12,7 +12,6 @@ const DashboardLayout = () => {
     const mobileRoutes = [
         '/mobile-ui',
         '/inventory-list',
-        '/locations',
         '/offline-inventory',
         '/online-inventory',
         '/barcode-mapping-mobile'
