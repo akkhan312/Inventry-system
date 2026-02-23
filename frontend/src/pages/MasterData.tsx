@@ -176,8 +176,8 @@ const MasterData = () => {
                 const canvas = document.createElement("canvas");
                 JsBarcode(canvas, barcodeValue, {
                     format: "CODE128",
-                    width: 2.2,
-                    height: 70,
+                    width: 2,
+                    height: 50,
                     displayValue: false,
                     margin: 0,
                     background: "#ffffff",
@@ -192,7 +192,7 @@ const MasterData = () => {
             let qrDataUrl = "";
             try {
                 qrDataUrl = await QRCode.toDataURL(barcodeValue, {
-                    width: 90,
+                    width: 60,
                     margin: 1,
                     errorCorrectionLevel: "M",
                 });
@@ -232,81 +232,88 @@ const MasterData = () => {
   <meta charset="UTF-8" />
   <title>Barcode Labels</title>
   <style>
+    @page { size: auto; margin: 6mm; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
       background: #f5f5f5;
-      padding: 20px;
+      padding: 8px;
     }
     .labels-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 6px;
       justify-content: flex-start;
     }
     .label {
       background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      width: 340px;
-      padding: 10px 14px 8px;
+      border: 1px solid #bbb;
+      border-radius: 3px;
+      width: 2.5in;
+      height: 1.5in;
+      padding: 4px 6px 3px;
       page-break-inside: avoid;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      justify-content: space-between;
     }
     .label-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-shrink: 0;
     }
     .logo {
-      height: 52px;
+      height: 26px;
+      max-width: 1.3in;
       object-fit: contain;
     }
     .qr {
-      width: 72px;
-      height: 72px;
+      width: 34px;
+      height: 34px;
       object-fit: contain;
+      flex-shrink: 0;
     }
     .divider {
-      height: 2px;
+      height: 1.5px;
       background: #111;
-      margin: 2px 0;
+      flex-shrink: 0;
     }
     .barcode {
       width: 100%;
-      height: 72px;
+      height: 0.45in;
       object-fit: fill;
       display: block;
+      flex-shrink: 0;
     }
     .barcode-placeholder {
-      font-size: 11px;
+      font-size: 8px;
       font-family: monospace;
-      letter-spacing: 2px;
+      letter-spacing: 1px;
       text-align: center;
-      padding: 8px 0;
+      padding: 2px 0;
     }
     .label-footer {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
-      padding-top: 2px;
+      flex-shrink: 0;
+      line-height: 1.2;
     }
     .label-footer strong {
-      font-size: 13px;
+      font-size: 9px;
       font-weight: 700;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.4px;
       color: #111;
     }
     .label-footer span {
-      font-size: 12px;
+      font-size: 8px;
       color: #333;
     }
     @media print {
-      body { background: #fff; padding: 6px; }
-      .label { border-color: #999; }
+      body { background: #fff; padding: 0; }
+      .label { border-color: #888; }
     }
   </style>
 </head>
