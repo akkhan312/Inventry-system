@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, RefreshCw, Download, Upload, Trash2, FileText, Printer } from "lucide-react";
 import api from "../services/api";
+import JsBarcode from "jsbarcode";
+import QRCode from "qrcode";
 
 interface Product {
     id: string;
@@ -156,86 +158,165 @@ const MasterData = () => {
         });
     };
 
-    // ── Print ──────────────────────────────────────────────────────────────────
-    const handlePrint = () => {
+    // ── Print (barcode label style) ────────────────────────────────────────────
+    const handlePrint = async () => {
         const toPrint =
             selectedIds.size > 0
                 ? filteredItems.filter((i) => selectedIds.has(i.id))
                 : filteredItems;
 
-        const rows = toPrint
-            .map(
-                (item) => `
-          <tr>
-            <td>${item.sku}</td>
-            <td>${item.barcode || "—"}</td>
-            <td>${item.name}</td>
-            <td>${item.category}</td>
-            <td>${item.description || "—"}</td>
-            <td style="text-align:right">${item.openingStock ?? "—"}</td>
-            <td style="text-align:right">${item.quantity}</td>
-            <td>${item.location || "—"}</td>
-            <td>${statusLabel(item.status)}</td>
-            <td style="text-align:right">${item.salePrice != null ? Number(item.salePrice).toFixed(2) : "—"}</td>
-            <td>${item.updatedAt
-                        ? new Date(item.updatedAt)
-                            .toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" })
-                            .replace(/\//g, "-")
-                        : "—"
-                    }</td>
-          </tr>`
-            )
-            .join("");
+        if (toPrint.length === 0) return;
 
-        const printWindow = window.open("", "_blank", "width=1100,height=800");
+        const labelPromises = toPrint.map(async (item) => {
+            const barcodeValue = item.barcode || item.sku;
+
+            // Generate barcode as data URL using JsBarcode on a hidden canvas
+            let barcodeDataUrl = "";
+            try {
+                const canvas = document.createElement("canvas");
+                JsBarcode(canvas, barcodeValue, {
+                    format: "CODE128",
+                    width: 2.2,
+                    height: 70,
+                    displayValue: false,
+                    margin: 0,
+                    background: "#ffffff",
+                    lineColor: "#000000",
+                });
+                barcodeDataUrl = canvas.toDataURL("image/png");
+            } catch {
+                barcodeDataUrl = "";
+            }
+
+            // Generate QR code as data URL
+            let qrDataUrl = "";
+            try {
+                qrDataUrl = await QRCode.toDataURL(barcodeValue, {
+                    width: 90,
+                    margin: 1,
+                    errorCorrectionLevel: "M",
+                });
+            } catch {
+                qrDataUrl = "";
+            }
+
+            const logoUrl = `${window.location.origin}/gst.png`;
+
+            return `
+            <div class="label">
+              <div class="label-header">
+                <img class="logo" src="${logoUrl}" alt="GST Logo" />
+                ${qrDataUrl ? `<img class="qr" src="${qrDataUrl}" alt="QR" />` : ""}
+              </div>
+              <div class="divider"></div>
+              ${barcodeDataUrl
+                    ? `<img class="barcode" src="${barcodeDataUrl}" alt="Barcode" />`
+                    : `<div class="barcode-placeholder">${barcodeValue}</div>`
+                }
+              <div class="label-footer">
+                <strong>${item.sku}</strong>
+                <span>${item.name}</span>
+              </div>
+            </div>`;
+        });
+
+        const labelHTMLParts = await Promise.all(labelPromises);
+        const labelsHTML = labelHTMLParts.join("");
+
+        const printWindow = window.open("", "_blank", "width=960,height=700");
         if (!printWindow) return;
 
-        printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Master Data — Print</title>
-        <style>
-          * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #2C3E50; padding: 24px; }
-          h1 { font-size: 20px; margin-bottom: 4px; }
-          .meta { font-size: 11px; color: #6C757D; margin-bottom: 16px; }
-          table { width: 100%; border-collapse: collapse; }
-          th { background: #f0f2f5; text-align: left; padding: 8px 10px; font-weight: 600;
-               border-bottom: 2px solid #cdd4db; white-space: nowrap; }
-          td { padding: 7px 10px; border-bottom: 1px solid #e1e8ed; white-space: nowrap; }
-          tr:nth-child(even) td { background: #fafbfc; }
-          @media print {
-            body { padding: 0; }
-            button { display: none; }
-          }
-        </style>
-      </head>
-      <body>
-        <h1>Master Data</h1>
-        <p class="meta">Printed: ${new Date().toLocaleString()} &nbsp;|&nbsp; Total rows: ${toPrint.length}${selectedIds.size > 0 ? " (selected)" : ""}</p>
-        <table>
-          <thead>
-            <tr>
-              <th>Item Code</th>
-              <th>Barcode / QR</th>
-              <th>Item Name</th>
-              <th>Category</th>
-              <th>Description</th>
-              <th style="text-align:right">Opening Qty</th>
-              <th style="text-align:right">Current Qty</th>
-              <th>Location</th>
-              <th>Status</th>
-              <th style="text-align:right">Sale Price</th>
-              <th>Last Updated</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-        <script>window.onload = () => { window.print(); }<\/script>
-      </body>
-      </html>
-    `);
+        printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Barcode Labels</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    .labels-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: flex-start;
+    }
+    .label {
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 340px;
+      padding: 10px 14px 8px;
+      page-break-inside: avoid;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .label-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      height: 52px;
+      object-fit: contain;
+    }
+    .qr {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+    }
+    .divider {
+      height: 2px;
+      background: #111;
+      margin: 2px 0;
+    }
+    .barcode {
+      width: 100%;
+      height: 72px;
+      object-fit: fill;
+      display: block;
+    }
+    .barcode-placeholder {
+      font-size: 11px;
+      font-family: monospace;
+      letter-spacing: 2px;
+      text-align: center;
+      padding: 8px 0;
+    }
+    .label-footer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding-top: 2px;
+    }
+    .label-footer strong {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #111;
+    }
+    .label-footer span {
+      font-size: 12px;
+      color: #333;
+    }
+    @media print {
+      body { background: #fff; padding: 6px; }
+      .label { border-color: #999; }
+    }
+  </style>
+</head>
+<body>
+  <div class="labels-grid">
+    ${labelsHTML}
+  </div>
+  <script>window.onload = () => { window.print(); }<\/script>
+</body>
+</html>`);
         printWindow.document.close();
     };
 
