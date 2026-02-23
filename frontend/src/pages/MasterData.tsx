@@ -232,88 +232,88 @@ const MasterData = () => {
   <meta charset="UTF-8" />
   <title>Barcode Labels</title>
   <style>
-    @page { size: auto; margin: 6mm; }
+    @page {
+      size: 2.5in 1.5in;
+      margin: 0;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: #f5f5f5;
-      padding: 8px;
-    }
-    .labels-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      justify-content: flex-start;
-    }
-    .label {
-      background: #fff;
-      border: 1px solid #bbb;
-      border-radius: 3px;
+    html, body {
       width: 2.5in;
       height: 1.5in;
-      padding: 4px 6px 3px;
-      page-break-inside: avoid;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #fff;
+    }
+    .labels-grid {
+      display: block;
+    }
+    .label {
+      width: 2.5in;
+      height: 1.5in;
+      padding: 4px 7px 3px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      page-break-after: always;
+      break-after: page;
+      background: #fff;
+    }
+    .label:last-child {
+      page-break-after: avoid;
+      break-after: avoid;
     }
     .label-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-shrink: 0;
+      height: 0.38in;
     }
     .logo {
-      height: 26px;
-      max-width: 1.3in;
+      height: 100%;
+      max-width: 1.4in;
       object-fit: contain;
+      object-position: left center;
     }
     .qr {
-      width: 34px;
-      height: 34px;
+      width: 0.38in;
+      height: 0.38in;
       object-fit: contain;
       flex-shrink: 0;
     }
     .divider {
       height: 1.5px;
-      background: #111;
+      background: #000;
       flex-shrink: 0;
     }
     .barcode {
       width: 100%;
-      height: 0.45in;
+      height: 0.48in;
       object-fit: fill;
       display: block;
       flex-shrink: 0;
     }
     .barcode-placeholder {
-      font-size: 8px;
+      font-size: 7px;
       font-family: monospace;
       letter-spacing: 1px;
       text-align: center;
-      padding: 2px 0;
     }
     .label-footer {
       display: flex;
       flex-direction: column;
       align-items: center;
       flex-shrink: 0;
-      line-height: 1.2;
+      line-height: 1.25;
     }
     .label-footer strong {
-      font-size: 9px;
+      font-size: 8.5pt;
       font-weight: 700;
-      letter-spacing: 0.4px;
-      color: #111;
+      color: #000;
     }
     .label-footer span {
-      font-size: 8px;
-      color: #333;
-    }
-    @media print {
-      body { background: #fff; padding: 0; }
-      .label { border-color: #888; }
+      font-size: 7.5pt;
+      color: #222;
     }
   </style>
 </head>
@@ -324,6 +324,7 @@ const MasterData = () => {
   <script>window.onload = () => { window.print(); }<\/script>
 </body>
 </html>`);
+
         printWindow.document.close();
     };
 
