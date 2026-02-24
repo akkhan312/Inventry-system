@@ -242,9 +242,6 @@ const MasterData = () => {
       height: 1.5in;
       font-family: 'Segoe UI', Arial, sans-serif;
       background: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
     .labels-grid {
       display: block;
