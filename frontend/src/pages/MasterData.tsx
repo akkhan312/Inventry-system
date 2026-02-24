@@ -242,6 +242,9 @@ const MasterData = () => {
       height: 1.5in;
       font-family: 'Segoe UI', Arial, sans-serif;
       background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .labels-grid {
       display: block;
@@ -249,11 +252,13 @@ const MasterData = () => {
     .label {
       width: 2.5in;
       height: 1.5in;
-      padding: 2px 5px 1px;
+      padding: 3px 6px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      gap: 1px;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
       page-break-after: always;
       break-after: page;
       background: #fff;
@@ -267,6 +272,7 @@ const MasterData = () => {
       justify-content: space-between;
       align-items: center;
       flex-shrink: 0;
+      width: 100%;
       height: 0.33in;
     }
     .logo {
@@ -285,6 +291,7 @@ const MasterData = () => {
       height: 1px;
       background: #000;
       flex-shrink: 0;
+      width: 100%;
     }
     .barcode {
       width: 100%;
@@ -292,6 +299,7 @@ const MasterData = () => {
       object-fit: fill;
       display: block;
       flex-shrink: 0;
+      align-self: center;
     }
     .barcode-placeholder {
       font-size: 7px;
