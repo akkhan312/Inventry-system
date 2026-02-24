@@ -249,11 +249,11 @@ const MasterData = () => {
     .label {
       width: 2.5in;
       height: 1.5in;
-      padding: 4px 7px 3px;
+      padding: 2px 5px 1px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      gap: 1px;
       page-break-after: always;
       break-after: page;
       background: #fff;
@@ -267,7 +267,7 @@ const MasterData = () => {
       justify-content: space-between;
       align-items: center;
       flex-shrink: 0;
-      height: 0.38in;
+      height: 0.33in;
     }
     .logo {
       height: 100%;
@@ -276,19 +276,19 @@ const MasterData = () => {
       object-position: left center;
     }
     .qr {
-      width: 0.38in;
-      height: 0.38in;
+      width: 0.33in;
+      height: 0.33in;
       object-fit: contain;
       flex-shrink: 0;
     }
     .divider {
-      height: 1.5px;
+      height: 1px;
       background: #000;
       flex-shrink: 0;
     }
     .barcode {
       width: 100%;
-      height: 0.48in;
+      height: 0.43in;
       object-fit: fill;
       display: block;
       flex-shrink: 0;
@@ -304,15 +304,15 @@ const MasterData = () => {
       flex-direction: column;
       align-items: center;
       flex-shrink: 0;
-      line-height: 1.25;
+      line-height: 1.1;
     }
     .label-footer strong {
-      font-size: 8.5pt;
+      font-size: 7.5pt;
       font-weight: 700;
       color: #000;
     }
     .label-footer span {
-      font-size: 7.5pt;
+      font-size: 6.5pt;
       color: #222;
     }
   </style>
