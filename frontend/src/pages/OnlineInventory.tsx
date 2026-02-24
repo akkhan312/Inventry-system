@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import MobileHeader from '../components/MobileHeader';
 import { useIsMobile } from '../hooks/useMediaQuery';
 import { useNavigate } from 'react-router-dom';
@@ -50,7 +50,11 @@ const OnlineInventory = () => {
   const [masterProducts, setMasterProducts] = useState<MasterProduct[]>([]);
   const [showUnknownPopup, setShowUnknownPopup] = useState(false);
   const [unknownBarcode, setUnknownBarcode] = useState('');
+  const [unknownItemName, setUnknownItemName] = useState('');
   const [showQtyPopup, setShowQtyPopup] = useState(false);
+
+  // Scanner auto-submit: debounce timer ref
+  const scannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -160,9 +164,15 @@ const OnlineInventory = () => {
     }
   };
 
-  const handleAddItem = () => {
+  const handleAddItem = useCallback(() => {
     const code = barcodeInput.trim();
     if (!code) return;
+
+    // Clear any pending scanner timer
+    if (scannerTimerRef.current) {
+      clearTimeout(scannerTimerRef.current);
+      scannerTimerRef.current = null;
+    }
 
     // 1. Check if already in current list -> Increment
     const existingInCounts = counts.find(r => r.barcode === code);
@@ -183,24 +193,48 @@ const OnlineInventory = () => {
       setBarcodeInput('');
     } else {
       // 3. Not found -> Popup
-      setUnknownBarcode(code);
-      setShowUnknownPopup(true);
+      openUnknownPopup(code);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [barcodeInput, counts, masterProducts]);
+
+  // ── Scanner auto-submit ──────────────────────────────────────────
+  // Hardware barcode scanners type all characters in <50ms then send
+  // Enter. This debounce fires 300ms after the last keystroke when
+  // there is content — so the item is added automatically with no
+  // button click needed. Manual typing still works via Enter / button.
+  useEffect(() => {
+    if (!isInventoryActive || !barcodeInput.trim() || showUnknownPopup) return;
+
+    if (scannerTimerRef.current) clearTimeout(scannerTimerRef.current);
+    scannerTimerRef.current = setTimeout(() => {
+      handleAddItem();
+    }, 300);
+
+    return () => {
+      if (scannerTimerRef.current) clearTimeout(scannerTimerRef.current);
+    };
+  }, [barcodeInput, isInventoryActive, showUnknownPopup]);
+  // ────────────────────────────────────────────────────────────────
 
   const handleUnknownProductChoice = (shouldAdd: boolean) => {
     if (shouldAdd) {
-      const name = prompt("Enter product name:", "New Item");
-      if (name) {
-        setCounts(prev => [
-          ...prev,
-          { name: name, barcode: unknownBarcode, quantity: 1 }
-        ]);
-      }
+      const name = unknownItemName.trim() || `Item ${unknownBarcode}`;
+      setCounts(prev => [
+        ...prev,
+        { name, barcode: unknownBarcode, quantity: 1 }
+      ]);
     }
     setUnknownBarcode('');
+    setUnknownItemName('');
     setBarcodeInput('');
     setShowUnknownPopup(false);
+  };
+
+  const openUnknownPopup = (code: string) => {
+    setUnknownBarcode(code);
+    setUnknownItemName('');
+    setShowUnknownPopup(true);
   };
 
   const clearLocalSession = () => {
@@ -304,10 +338,14 @@ const OnlineInventory = () => {
               <input
                 type="text"
                 value={barcodeInput}
-                onChange={(e) => setBarcodeInput(e.target.value)}
+                onChange={(e) => {
+                  // Clear any pending timer so we reset the debounce on each keystroke
+                  if (scannerTimerRef.current) clearTimeout(scannerTimerRef.current);
+                  setBarcodeInput(e.target.value);
+                }}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
                 className="block w-full p-2.5 sm:p-3 text-sm sm:text-base text-[#172B4D] bg-white border-2 border-[#DFE1E6] rounded-md focus:border-[#0052CC] focus:outline-none focus:ring-2 sm:focus:ring-4 focus:ring-[#0052CC]/20 transition-all"
-                placeholder="Enter or scan barcode..."
+                placeholder="Scan barcode or type manually..."
                 autoFocus
               />
             </div>
@@ -504,27 +542,39 @@ const OnlineInventory = () => {
       {showUnknownPopup && (
         <div className="fixed inset-0 bg-[#091E42]/50 flex items-center justify-center z-50 p-3 sm:p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-[95vw] sm:max-w-sm md:max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-[#DFE1E6]">
-              <h3 className="text-xl font-semibold text-[#172B4D]">Product Not Found</h3>
+            <div className="p-5 border-b border-[#DFE1E6]">
+              <h3 className="text-lg font-semibold text-[#172B4D]">Product Not Found</h3>
+              <p className="text-sm text-[#5E6C84] mt-1">Barcode <span className="font-mono font-bold text-[#172B4D]">{unknownBarcode}</span> is not in master data.</p>
             </div>
-            <div className="p-6 space-y-4">
-              <p className="text-[#172B4D]">Barcode <strong>{unknownBarcode}</strong> was not found in the master data.</p>
-              <p className="text-[#172B4D]">Do you want to add this product?</p>
+            <div className="p-5 space-y-3">
+              <p className="text-sm text-[#172B4D]">Enter a name to add this item to your inventory count. It will also be <strong>automatically created</strong> in master data when you submit.</p>
+              <div>
+                <label className="block text-xs font-semibold text-[#5E6C84] uppercase mb-1">Item Name</label>
+                <input
+                  type="text"
+                  value={unknownItemName}
+                  onChange={(e) => setUnknownItemName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleUnknownProductChoice(true)}
+                  className="block w-full p-2.5 text-[#172B4D] bg-white border-2 border-[#DFE1E6] rounded-md focus:border-[#0052CC] focus:outline-none focus:ring-2 focus:ring-[#0052CC]/20 text-sm"
+                  placeholder={`e.g., New Item ${unknownBarcode}`}
+                  autoFocus
+                />
+              </div>
             </div>
             <div className="p-4 bg-[#F4F5F7] flex gap-3 justify-end rounded-b-lg">
               <button
                 type="button"
                 onClick={() => handleUnknownProductChoice(false)}
-                className="flex-1 bg-white text-[#172B4D] border border-[#DFE1E6] py-2 px-4 rounded-md font-semibold hover:bg-[#DFE1E6] transition-all"
+                className="flex-1 bg-white text-[#172B4D] border border-[#DFE1E6] py-2 px-4 rounded-md font-semibold hover:bg-[#DFE1E6] transition-all text-sm"
               >
-                No
+                Skip
               </button>
               <button
                 type="button"
                 onClick={() => handleUnknownProductChoice(true)}
-                className="flex-1 bg-[#0052CC] text-white py-2 px-4 rounded-md font-semibold hover:bg-[#0747A6] transition-all"
+                className="flex-1 bg-[#0052CC] text-white py-2 px-4 rounded-md font-semibold hover:bg-[#0747A6] transition-all text-sm"
               >
-                Yes
+                Add Item
               </button>
             </div>
           </div>

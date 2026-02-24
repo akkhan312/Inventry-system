@@ -54,20 +54,58 @@ router.post('/sync', async (req, res) => {
                     ...(countedBy != null && countedBy !== '' && { countedBy }),
                     ...(employeeId != null && employeeId !== '' && { employeeId })
                 }
-            }).catch(() => {});
+            }).catch(() => { });
         }
 
-        // Update matching products
+        // Update existing products or auto-create new ones from scanned barcodes
+        let autoCreatedCount = 0;
         for (const item of items) {
             const sku = item.barcode || item.sku;
-            await prisma.product.updateMany({
-                where: { sku: sku },
-                data: {
-                    quantity: {
-                        set: item.quantity
-                    }
+
+            // First try to find by sku
+            const existingBySku = await prisma.product.findUnique({ where: { sku } }).catch(() => null);
+
+            // Also try to find by barcode field if no SKU match
+            const existingByBarcode = !existingBySku
+                ? await (prisma.product as any).findFirst({ where: { barcode: sku } }).catch(() => null)
+                : null;
+
+            const existing = existingBySku || existingByBarcode;
+
+            if (existing) {
+                // Update quantity of the matched product
+                await prisma.product.update({
+                    where: { id: existing.id },
+                    data: { quantity: item.quantity }
+                }).catch(err => console.error(`Failed to update product ${sku}:`, err));
+            } else {
+                // Auto-create new master data product from scanned item
+                try {
+                    const qty = item.quantity ?? 0;
+                    await (prisma.product as any).create({
+                        data: {
+                            name: item.name || `Item ${sku}`,
+                            sku: sku,
+                            category: item.category || 'Uncategorized',
+                            quantity: qty,
+                            purchasePrice: 0,
+                            salePrice: 0,
+                            unit: 'pcs',
+                            gstRate: 18,
+                            status: qty <= 0 ? 'out' : (qty <= 10 ? 'low' : 'in'),
+                            openingStock: qty,
+                            minStock: 10,
+                            reorderPoint: 15,
+                            barcode: sku,
+                            location: 'Main Warehouse',
+                        }
+                    });
+                    autoCreatedCount++;
+                    console.log(`[Sync] Auto-created new product: ${sku} - ${item.name}`);
+                } catch (createErr: any) {
+                    console.error(`[Sync] Failed to auto-create product ${sku}:`, createErr.message);
                 }
-            }).catch(err => console.error(`Failed to update product ${sku}:`, err));
+            }
         }
 
         // Invalidate dashboard cache
@@ -76,7 +114,7 @@ router.post('/sync', async (req, res) => {
         // Create notification for sync
         await createNotification(
             'Inventory Sync Completed',
-            `Inventory for ${submission.location.name} has been synced (${items.length} items).`,
+            `Inventory for ${submission.location.name} has been synced (${items.length} items${autoCreatedCount > 0 ? `, ${autoCreatedCount} new product(s) added to master data` : ''}).`,
             'info'
         );
 
