@@ -1,6 +1,6 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 
-export const BASE_URL = 'https://inventoryapi.gstsa1.org';
+export const BASE_URL = import.meta.env.VITE_API_URL || 'https://inventoryapi.gstsa1.org';
 export const API_URL = `${BASE_URL}/api`;
 
 const api = axios.create({
